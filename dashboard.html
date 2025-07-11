@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Chef - La Délicatesse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body style="background-color: var(--gray-bg);">
+    <!-- Header -->
+    <header style="background-color: var(--light-bg); box-shadow: var(--shadow);">
+        <div class="container">
+            <div class="flex justify-between items-center py-4">
+                <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                    <div class="logo-icon">
+                        <span>D</span>
+                    </div>
+                    <h1>La Délicatesse</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Navegación adicional -->
+                    <nav class="hidden md:flex space-x-6">
+                        <a href="index.html" class="text-sm font-medium transition" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
+                            Inicio
+                        </a>
+                        <a href="index.html#chefs" class="text-sm font-medium transition" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
+                            Ver Chefs
+                        </a>
+                        <a href="index.html#recetas" class="text-sm font-medium transition" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
+                            Recetas
+                        </a>
+                    </nav>
+                    
+                    <div class="flex items-center space-x-3">
+                        <div id="userAvatar" class="w-12 h-12 rounded-full overflow-hidden" style="border: 2px solid var(--primary-light);">
+                            <img id="userAvatarImg" src="/placeholder.svg?height=48&width=48" alt="Avatar" class="w-full h-full object-cover hidden">
+                            <div id="userAvatarPlaceholder" class="w-full h-full flex items-center justify-center" style="background-color: var(--primary-light); color: var(--light-text);">
+                                <span id="userInitials" class="font-semibold">U</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span id="userName" class="font-medium" style="color: var(--text-color); font-family: var(--font-body);">Chef</span>
+                            <p class="text-sm" style="color: var(--text-light);">Dashboard</p>
+                        </div>
+                    </div>
+                    <button onclick="logout()" class="text-red-600 hover:text-red-800 transition font-medium">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Sidebar -->
+            <div class="lg:w-1/4">
+                <div class="p-6 card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow);">
+                    <h3 class="text-lg font-semibold mb-6" style="color: var(--primary-color); font-family: var(--font-heading);">Menú</h3>
+                    <nav class="space-y-2">
+                        <button onclick="showSection('overview')" class="w-full text-left px-4 py-3 rounded-lg transition dashboard-nav-btn active" style="color: var(--text-color); font-family: var(--font-body);">
+                            <span class="flex items-center space-x-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                </svg>
+                                <span>Dashboard</span>
+                            </span>
+                        </button>
+                        <button onclick="showSection('services')" class="w-full text-left px-4 py-3 rounded-lg transition dashboard-nav-btn" style="color: var(--text-color); font-family: var(--font-body);">
+                            <span class="flex items-center space-x-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                <span>Mis Servicios</span>
+                            </span>
+                        </button>
+                        <button onclick="showSection('recipes')" class="w-full text-left px-4 py-3 rounded-lg transition dashboard-nav-btn" style="color: var(--text-color); font-family: var(--font-body);">
+                            <span class="flex items-center space-x-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                </svg>
+                                <span>Recetas</span>
+                            </span>
+                        </button>
+                        <button onclick="showSection('messages')" class="w-full text-left px-4 py-3 rounded-lg transition dashboard-nav-btn" style="color: var(--text-color); font-family: var(--font-body);">
+                            <span class="flex items-center space-x-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                                <span>Mensajes</span>
+                            </span>
+                        </button>
+                        <button onclick="showSection('profile')" class="w-full text-left px-4 py-3 rounded-lg transition dashboard-nav-btn" style="color: var(--text-color); font-family: var(--font-body);">
+                            <span class="flex items-center space-x-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <span>Mi Perfil</span>
+                            </span>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:w-3/4">
+                <!-- Overview Section -->
+                <div id="overview" class="dashboard-section">
+                    <div class="p-8 mb-8 card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow);">
+                        <h2 class="text-3xl font-bold mb-8" style="color: var(--primary-color); font-family: var(--font-heading);">Dashboard</h2>
+                        
+                        <!-- Stats Cards -->
+                        <div class="grid md:grid-cols-3 gap-8 mb-12">
+                            <div class="p-8 rounded-xl card-hover" style="background: linear-gradient(135deg, var(--secondary-color) 0%, rgba(139, 90, 43, 0.1) 100%); border: 1px solid var(--border-color);">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium mb-2" style="color: var(--primary-color);">Servicios Totales</p>
+                                        <p class="text-3xl font-bold" style="color: var(--primary-dark); font-family: var(--font-heading);" id="totalServices">0</p>
+                                    </div>
+                                    <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background-color: rgba(139, 90, 43, 0.2);">
+                                        <svg class="w-8 h-8" style="color: var(--primary-color);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-8 rounded-xl card-hover" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.2) 100%); border: 1px solid var(--border-color);">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium mb-2" style="color: var(--accent-dark);">Calificación</p>
+                                        <p class="text-3xl font-bold" style="color: var(--accent-dark); font-family: var(--font-heading);" id="avgRating">0.0</p>
+                                    </div>
+                                    <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background-color: rgba(212, 175, 55, 0.2);">
+                                        <svg class="w-8 h-8" style="color: var(--accent-color);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-8 rounded-xl card-hover" style="background: linear-gradient(135deg, var(--gray-bg) 0%, rgba(102, 102, 102, 0.1) 100%); border: 1px solid var(--border-color);">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium mb-2" style="color: var(--text-color);">Ingresos</p>
+                                        <p class="text-3xl font-bold" style="color: var(--text-color); font-family: var(--font-heading);" id="totalEarnings">$0</p>
+                                    </div>
+                                    <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background-color: rgba(102, 102, 102, 0.1);">
+                                        <svg class="w-8 h-8" style="color: var(--text-light);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div>
+                            <h3 class="text-xl font-semibold mb-6" style="color: var(--primary-color); font-family: var(--font-heading);">Actividad Reciente</h3>
+                            <div id="recentActivity" class="space-y-4">
+                                <!-- Se cargará dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services Section -->
+                <div id="services" class="dashboard-section hidden">
+                    <div class="p-8 card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow);">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-bold" style="color: var(--primary-color); font-family: var(--font-heading);">Mis Servicios</h2>
+                            <button onclick="openModal('serviceModal')" class="btn btn-primary">
+                                Nuevo Servicio
+                            </button>
+                        </div>
+                        
+                        <div id="servicesList" class="space-y-6">
+                            <!-- Se cargará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recipes Section -->
+                <div id="recipes" class="dashboard-section hidden">
+                    <div class="p-8 card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow);">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-bold" style="color: var(--primary-color); font-family: var(--font-heading);">Mis Recetas</h2>
+                            <button onclick="openModal('recipeModal')" class="btn btn-primary">
+                                Nueva Receta
+                            </button>
+                        </div>
+                        
+                        <div id="recipesList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Se cargará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Section -->
+                <div id="messages" class="dashboard-section hidden">
+                    <div class="p-8 card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow);">
+                        <h2 class="text-3xl font-bold mb-8" style="color: var(--primary-color); font-family: var(--font-heading);">Mensajes</h2>
+                        
+                        <div class="flex h-96 rounded-lg overflow-hidden" style="border: 1px solid var(--border-color);">
+                            <!-- Conversations List -->
+                            <div class="w-1/3" style="border-right: 1px solid var(--border-color); background-color: var(--gray-bg);">
+                                <div class="p-4" style="border-bottom: 1px solid var(--border-color);">
+                                    <h3 class="font-semibold" style="color: var(--primary-color); font-family: var(--font-heading);">Conversaciones</h3>
+                                </div>
+                                <div id="conversationsList" class="p-4 space-y-2 overflow-y-auto">
+                                    <!-- Se cargará dinámicamente -->
+                                </div>
+                            </div>
+                            
+                            <!-- Chat Area -->
+                            <div class="w-2/3 flex flex-col">
+                                <div id="chatArea" class="h-full flex flex-col">
+                                    <div class="flex-1 overflow-y-auto p-4" id="messagesContainer">
+                                        <p class="text-center" style="color: var(--text-light);">Selecciona una conversación para ver los mensajes</p>
+                                    </div>
+                                    
+                                    <div class="p-4" style="border-top: 1px solid var(--border-color); background-color: var(--gray-bg);">
+                                        <div class="flex gap-3">
+                                            <input type="text" id="messageInput" placeholder="Escribe tu mensaje..." 
+                                                   class="flex-1">
+                                            <button onclick="sendMessage()" class="btn btn-primary">
+                                                Enviar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Section -->
+                <div id="profile" class="dashboard-section hidden">
+                    <div class="p-8 card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow);">
+                        <h2 class="text-3xl font-bold mb-8" style="color: var(--primary-color); font-family: var(--font-heading);">Mi Perfil</h2>
+                        
+                        <form id="profileForm" onsubmit="updateProfile(event)" enctype="multipart/form-data">
+                            <!-- Profile Photo Section -->
+                            <div class="mb-8">
+                                <label class="block text-sm font-medium mb-4" style="color: var(--text-color);">Foto de Perfil</label>
+                                <div class="flex items-center space-x-6">
+                                    <div class="w-24 h-24 rounded-full overflow-hidden" style="background-color: var(--gray-bg); border: 2px solid var(--border-color);">
+                                        <img id="profilePhotoPreview" src="/placeholder.svg?height=96&width=96" alt="Foto de perfil" class="w-full h-full object-cover hidden">
+                                        <div id="profilePhotoPlaceholder" class="w-full h-full flex items-center justify-center" style="color: var(--text-light);">
+                                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <input type="file" id="profilePhoto" name="foto_perfil" accept="image/*" class="hidden" onchange="previewProfilePhoto(event)">
+                                        <button type="button" onclick="document.getElementById('profilePhoto').click()" class="btn btn-primary">
+                                            Cambiar Foto
+                                        </button>
+                                        <p class="text-sm mt-2" style="color: var(--text-light);">JPG, PNG o GIF (máx. 2MB)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <!-- Basic Information -->
+                                <div class="form-group">
+                                    <label>Nombre Completo</label>
+                                    <input type="text" name="nombre" id="profileNombre" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" name="email" id="profileEmail" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Teléfono</label>
+                                    <input type="tel" name="telefono" id="profileTelefono">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Especialidad Culinaria</label>
+                                    <input type="text" name="especialidad" id="profileEspecialidad" placeholder="ej. Cocina Italiana, Francesa, Asiática">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Años de Experiencia</label>
+                                    <input type="number" name="experiencia_anos" id="profileExperiencia" min="0" max="50">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Ubicación</label>
+                                    <select name="ubicacion" id="profileUbicacion">
+                                        <option value="">Seleccionar ubicación</option>
+                                        <option value="San Salvador">San Salvador</option>
+                                        <option value="Santa Tecla">Santa Tecla</option>
+                                        <option value="Antiguo Cuscatlán">Antiguo Cuscatlán</option>
+                                        <option value="Soyapango">Soyapango</option>
+                                        <option value="San Marcos">San Marcos</option>
+                                        <option value="Ilopango">Ilopango</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Precio por Hora ($)</label>
+                                    <input type="number" name="precio_por_hora" id="profilePrecio" min="10" max="200" step="0.01">
+                                </div>
+                            </div>
+                            
+                            <!-- Biography -->
+                            <div class="form-group">
+                                <label>Biografía</label>
+                                <textarea name="biografia" id="profileBiografia" rows="4" placeholder="Cuéntanos sobre tu experiencia, estilo culinario y lo que te apasiona de la cocina..."></textarea>
+                            </div>
+                            
+                            <!-- Certifications -->
+                            <div class="form-group">
+                                <label>Certificaciones</label>
+                                <textarea name="certificaciones" id="profileCertificaciones" rows="3" placeholder="Lista tus certificaciones, diplomas y cursos relevantes (separados por comas)"></textarea>
+                            </div>
+                            
+                            <div class="mt-8 flex gap-4">
+                                <button type="submit" class="btn btn-primary">
+                                    Actualizar Perfil
+                                </button>
+                                <button type="button" onclick="resetProfileForm()" class="btn btn-outline">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Modal -->
+    <div id="serviceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h2>Gestionar Servicio</h2>
+                </div>
+                
+                <div id="serviceDetails" class="auth-form active">
+                    <!-- Se cargará dinámicamente -->
+                </div>
+                
+                <button onclick="closeModal('serviceModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recipe Modal -->
+    <div id="recipeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="max-w-4xl w-full bg-white rounded-lg shadow-xl overflow-hidden">
+            <div class="auth-header">
+                <h2>Nueva Receta</h2>
+                <p style="color: var(--text-light);">Comparte tu receta con fotos paso a paso</p>
+            </div>
+            
+            <div class="max-h-[80vh] overflow-y-auto">
+                <div class="auth-form active">
+                    <form id="recipeForm" onsubmit="saveRecipe(event)" enctype="multipart/form-data">
+                        <!-- Basic Information -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Información Básica</h3>
+                            
+                            <div class="space-y-6">
+                                <div class="form-group">
+                                    <label>Título de la Receta</label>
+                                    <input type="text" name="titulo" required placeholder="Ej: Pasta Carbonara Auténtica">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Descripción</label>
+                                    <textarea name="descripcion" rows="3" placeholder="Describe brevemente tu receta..."></textarea>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Tiempo de Preparación (minutos)</label>
+                                        <input type="number" name="tiempo_preparacion" min="1" max="480">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Dificultad</label>
+                                        <select name="dificultad" required>
+                                            <option value="">Seleccionar...</option>
+                                            <option value="fácil">Fácil</option>
+                                            <option value="intermedio">Intermedio</option>
+                                            <option value="difícil">Difícil</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Precio ($)</label>
+                                        <input type="number" name="precio" step="0.01" min="0.01" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ingredients -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Ingredientes</h3>
+                            
+                            <div id="ingredientsList" class="space-y-3">
+                                <div class="ingredient-item flex gap-3">
+                                    <input type="text" placeholder="Cantidad" class="w-24" name="ingredient_quantity[]">
+                                    <input type="text" placeholder="Unidad (ej: tazas, gramos)" class="w-32" name="ingredient_unit[]">
+                                    <input type="text" placeholder="Ingrediente" class="flex-1" name="ingredient_name[]">
+                                    <button type="button" onclick="removeIngredient(this)" class="btn btn-outline btn-sm text-red-600 border-red-600">
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button type="button" onclick="addIngredient()" class="btn btn-outline btn-sm mt-4">
+                                + Agregar Ingrediente
+                            </button>
+                        </div>
+
+                        <!-- Step-by-step Instructions with Photos -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Instrucciones Paso a Paso</h3>
+                            
+                            <div id="stepsList" class="space-y-6">
+                                <div class="step-item p-4 rounded-lg" style="border: 1px solid var(--border-color); background-color: var(--gray-bg);">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="font-medium" style="color: var(--primary-color);">Paso 1</h4>
+                                        <button type="button" onclick="removeStep(this)" class="btn btn-outline btn-sm text-red-600 border-red-600">
+                                            Eliminar Paso
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Descripción del paso</label>
+                                        <textarea name="step_description[]" rows="3" placeholder="Describe detalladamente este paso..." required></textarea>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Foto del paso (opcional)</label>
+                                        <div class="flex items-center gap-4">
+                                            <input type="file" name="step_images[]" accept="image/*" class="hidden" onchange="previewStepImage(this)">
+                                            <button type="button" onclick="this.previousElementSibling.click()" class="btn btn-outline btn-sm">
+                                                Seleccionar Imagen
+                                            </button>
+                                            <div class="step-image-preview hidden">
+                                                <img class="w-20 h-20 object-cover rounded-lg" alt="Preview">
+                                                <button type="button" onclick="removeStepImage(this)" class="text-red-600 text-sm mt-1">Eliminar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="button" onclick="addStep()" class="btn btn-outline btn-sm mt-4">
+                                + Agregar Paso
+                            </button>
+                        </div>
+
+                        <!-- Final Result Photo -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Resultado Final</h3>
+                            
+                            <div class="form-group">
+                                <label>Foto del plato terminado</label>
+                                <div class="flex items-center gap-4">
+                                    <input type="file" name="final_image" accept="image/*" class="hidden" onchange="previewFinalImage(this)" required>
+                                    <button type="button" onclick="this.previousElementSibling.click()" class="btn btn-primary">
+                                        Seleccionar Imagen Principal
+                                    </button>
+                                    <div id="finalImagePreview" class="hidden">
+                                        <img class="w-32 h-32 object-cover rounded-lg" alt="Preview">
+                                        <button type="button" onclick="removeFinalImage()" class="text-red-600 text-sm mt-1">Eliminar</button>
+                                    </div>
+                                </div>
+                                <p class="text-sm mt-2" style="color: var(--text-light);">Esta será la imagen principal de tu receta</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 pt-4 border-t" style="border-color: var(--border-color);">
+                            <button type="submit" class="btn btn-primary">
+                                Publicar Receta
+                            </button>
+                            <button type="button" onclick="closeModal('recipeModal')" class="btn btn-outline">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <button onclick="closeModal('recipeModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                </button>
+        </div>
+    </div>
+</div>
+
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>

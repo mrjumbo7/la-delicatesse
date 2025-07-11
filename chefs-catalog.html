@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Chefs - La Délicatesse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white shadow-lg fixed w-full top-0 z-40" style="box-shadow: var(--shadow);">
+        <div class="container">
+            <div class="flex justify-between items-center py-4">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">
+                        <span>D</span>
+                    </div>
+                    <h1>La Délicatesse</h1>
+                </a>
+                
+                <!-- Desktop Navigation -->
+                <div class="nav-container">
+                    <nav>
+                        <ul>
+                            <li><a href="index.html">Inicio</a></li>
+                            <li><a href="#" class="active">Chefs</a></li>
+                            <li><a href="recipes-catalog.html">Recetas</a></li>
+                            <li><a href="index.html#contacto">Contacto</a></li>
+                        </ul>
+                    </nav>
+                    
+                    <!-- Auth Buttons -->
+                    <div id="authButtons" class="auth-buttons">
+                        <button onclick="openModal('loginModal')" class="btn btn-primary">
+                            Iniciar Sesión
+                        </button>
+                        <button onclick="openModal('registerModal')" class="btn btn-outline">
+                            Registrarse
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                    <span id="menuIcon">☰</span>
+                    <span id="closeIcon" style="display: none;">✕</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-24">
+        <section class="py-12">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-badge">Nuestros Expertos</div>
+                    <h2>Catálogo Completo de Chefs</h2>
+                    <p>Explora nuestra selección completa de chefs profesionales y encuentra el experto perfecto para tu experiencia culinaria.</p>
+                    <div class="header-decoration">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="mb-12 flex flex-col lg:flex-row gap-4 justify-center max-w-4xl mx-auto">
+                    <div class="form-group flex-1">
+                        <input type="text" id="searchChefs" placeholder="Buscar por nombre o especialidad..." class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <select id="filterLocation" class="w-full lg:w-auto">
+                            <option value="">Todas las ubicaciones</option>
+                            <option value="San Salvador">San Salvador</option>
+                            <option value="Santa Tecla">Santa Tecla</option>
+                            <option value="Antiguo Cuscatlán">Antiguo Cuscatlán</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="filterSpecialty" class="w-full lg:w-auto">
+                            <option value="">Todas las especialidades</option>
+                            <option value="Cocina Internacional">Cocina Internacional</option>
+                            <option value="Cocina Italiana">Cocina Italiana</option>
+                            <option value="Cocina Francesa">Cocina Francesa</option>
+                            <option value="Cocina Asiática">Cocina Asiática</option>
+                            <option value="Repostería">Repostería</option>
+                        </select>
+                    </div>
+                    <button onclick="searchChefs()" class="btn btn-primary">
+                        Buscar
+                    </button>
+                </div>
+
+                <!-- Grid de Chefs -->
+                <div id="chefsGrid" class="chef-cards">
+                    <!-- Los chefs se cargarán dinámicamente -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer style="background-color: var(--dark-bg); color: var(--light-text);" class="py-16">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Acerca de Nosotros</h3>
+                    <p>Conectamos clientes con chefs certificados para experiencias gastronómicas únicas en la comodidad de tu hogar.</p>
+                </div>
+                <div class="footer-column">
+                    <h3>Enlaces Rápidos</h3>
+                    <ul>
+                        <li><a href="index.html">Inicio</a></li>
+                        <li><a href="#">Chefs</a></li>
+                        <li><a href="recipes-catalog.html">Recetas</a></li>
+                        <li><a href="index.html#contacto">Contacto</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="copyright">
+                    &copy; 2025 La Délicatesse. Todos los derechos reservados.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/catalog.js"></script>
+</body>
+</html>

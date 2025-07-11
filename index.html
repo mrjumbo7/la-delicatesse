@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Délicatesse - Chefs a Domicilio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/slider.css">
+    <script src="assets/js/translations.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white shadow-lg fixed w-full top-0 z-40" style="box-shadow: var(--shadow);">
+        <div class="container">
+            <div class="flex justify-between items-center py-4">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <span>D</span>
+                    </div>
+                    <h1>La Délicatesse</h1>
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <div class="nav-container">
+                    <nav>
+                        <ul>
+                            <li><a href="#inicio" data-translate="inicio">Inicio</a></li>
+                            <li><a href="#chefs" data-translate="chefs">Chefs</a></li>
+                            <li><a href="#recetas" data-translate="recetas">Recetas</a></li>
+                            <li><a href="#contacto" data-translate="contacto">Contacto</a></li>
+                        </ul>
+                    </nav>
+                    
+                    <!-- Desktop Auth Buttons and Language Toggle -->
+                    <div class="flex items-center gap-4">
+                        <button id="languageToggle" onclick="changeLanguage(window.currentLanguage === 'en' ? 'es' : 'en')" class="btn btn-outline-sm" data-translate="languageToggle">
+                            ES
+                        </button>
+                        <div id="authButtons" class="auth-buttons">
+                            <button onclick="openModal('loginModal')" class="btn btn-primary" data-translate="iniciar_sesion">
+                                Iniciar Sesión
+                            </button>
+                            <button onclick="openModal('registerModal')" class="btn btn-outline" data-translate="registrarse">
+                                Registrarse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                    <span id="menuIcon">☰</span>
+                    <span id="closeIcon" style="display: none;">✕</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile menu overlay -->
+        <div id="mobileMenuOverlay" class="mobile-menu-overlay"></div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="inicio" class="hero">
+        <div class="hero-background"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge" data-translate="experiencia_culinaria">Experiencia Culinaria Premium</div>
+                <h2><span data-translate="experiencias_gastronomicas">Experiencias Gastronómicas</span> <span class="accent-text" data-translate="exclusivas">Exclusivas</span></h2>
+                <p data-translate="hero_description">
+                    Conectamos clientes exigentes con chefs certificados para crear experiencias culinarias únicas en la comodidad de tu hogar.
+                </p>
+                <div class="hero-buttons">
+                    <button onclick="scrollToSection('chefs')" class="btn btn-secondary">
+                        <span data-translate="explorar_chefs">Explorar Chefs</span>
+                    </button>
+                    <button onclick="openModal('registerModal')" class="btn btn-outline-light">
+                        <span data-translate="unete_chef">Únete como Chef</span>
+                    </button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">50+</div>
+                        <div class="stat-label" data-translate="chefs_certificados">Chefs Certificados</div>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <div class="stat-number">1000+</div>
+                        <div class="stat-label" data-translate="servicios_realizados">Servicios Realizados</div>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <div class="stat-number">4.9</div>
+                        <div class="stat-label" data-translate="calificacion_promedio">Calificación Promedio</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-scroll">
+            <span>Descubre Más</span>
+            <div class="scroll-icon">
+                <div class="scroll-dot"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20" style="background-color: var(--gray-bg);">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Nuestras Ventajas</div>
+                <h2>¿Por qué elegir La Délicatesse?</h2>
+                <p>Ofrecemos una experiencia gastronómica única con los más altos estándares de calidad y profesionalismo.</p>
+                <div class="header-decoration">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-12">
+                <div class="text-center p-8 rounded-lg hover:shadow-lg transition card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg);">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style="background-color: rgba(139, 90, 43, 0.1);">
+                        <svg class="w-10 h-10" style="color: var(--primary-color);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h4 class="text-2xl font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Chefs Certificados</h4>
+                    <p style="color: var(--text-light);">Todos nuestros chefs están certificados y tienen experiencia comprobada en alta cocina internacional.</p>
+                </div>
+                
+                <div class="text-center p-8 rounded-lg hover:shadow-lg transition card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg);">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style="background-color: rgba(139, 90, 43, 0.1);">
+                        <svg class="w-10 h-10" style="color: var(--primary-color);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h4 class="text-2xl font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Pagos Seguros</h4>
+                    <p style="color: var(--text-light);">Sistema de pagos encriptado y seguro. Tu dinero está protegido hasta completar el servicio.</p>
+                </div>
+                
+                <div class="text-center p-8 rounded-lg hover:shadow-lg transition card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg);">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style="background-color: rgba(139, 90, 43, 0.1);">
+                        <svg class="w-10 h-10" style="color: var(--primary-color);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                    </div>
+                    <h4 class="text-2xl font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Calidad Garantizada</h4>
+                    <p style="color: var(--text-light);">Sistema de calificaciones y reseñas que garantiza la mejor experiencia gastronómica.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chefs Section -->
+    <section id="chefs" class="featured-chefs">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Nuestro Equipo</div>
+                <h2>Chefs Destacados</h2>
+                <p>Conoce a nuestros talentosos chefs, cada uno especializado en diferentes tradiciones culinarias del mundo.</p>
+                <div class="header-decoration">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            
+            <!-- Search and Filter -->
+            <div class="mb-12 flex flex-col lg:flex-row gap-4 justify-center max-w-4xl mx-auto">
+                <div class="form-group flex-1">
+                    <input type="text" id="searchChefs" placeholder="Buscar por especialidad..." class="w-full">
+                </div>
+                <div class="form-group">
+                    <select id="filterLocation" class="w-full lg:w-auto">
+                        <option value="">Todas las ubicaciones</option>
+                        <option value="San Salvador">San Salvador</option>
+                        <option value="Santa Tecla">Santa Tecla</option>
+                        <option value="Antiguo Cuscatlán">Antiguo Cuscatlán</option>
+                    </select>
+                </div>
+                <button onclick="searchChefs()" class="btn btn-primary">
+                    Buscar
+                </button>
+            </div>
+            
+            <!-- Chefs Grid -->
+            <div id="chefsGrid" class="chef-cards">
+                <!-- Los chefs se cargarán dinámicamente -->
+            </div>
+            
+            <div class="text-center mt-8">
+                <a href="chefs-catalog.html" class="btn btn-primary" style="display: inline-block; width: 50%; margin: 0 auto;">
+                    Ver Todos los Chefs
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recetas Section -->
+    <section id="recetas" class="featured-recipes">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Sabores Únicos</div>
+                <h2>Recetas Exclusivas</h2>
+                <p>Descubre recetas únicas creadas por nuestros chefs expertos, disponibles para que las prepares en casa.</p>
+                <div class="header-decoration">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <!-- Filtros de Recetas -->
+            <div class="mb-12 flex flex-col lg:flex-row gap-4 justify-center max-w-4xl mx-auto">
+                <div class="form-group">
+                    <select id="filterPrice" class="w-full lg:w-auto" onchange="filterRecipes()">
+                        <option value="">Todos los precios</option>
+                        <option value="low">Hasta $20</option>
+                        <option value="medium">$21 - $50</option>
+                        <option value="high">Más de $50</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="filterDifficulty" class="w-full lg:w-auto" onchange="filterRecipes()">
+                        <option value="">Todas las dificultades</option>
+                        <option value="Fácil">Fácil</option>
+                        <option value="Intermedio">Intermedio</option>
+                        <option value="Dificil">Dificil</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="recetasGrid" class="recipe-cards">
+                <!-- Las recetas se cargarán dinámicamente -->
+            </div>
+
+            <div class="text-center mt-8">
+                <a href="recipes-catalog.html" class="btn btn-primary" style="display: inline-block; width: 50%; margin: 0 auto;">
+                    Ver Todas las Recetas
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contacto" class="py-20" style="background-color: var(--light-bg);">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Contáctanos</div>
+                <h2>¿Tienes alguna pregunta?</h2>
+                <p>Estamos aquí para ayudarte a crear la experiencia gastronómica perfecta.</p>
+                <div class="header-decoration">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="max-w-2xl mx-auto">
+                <form class="space-y-6">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mensaje</label>
+                        <textarea rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Enviar Mensaje
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="background-color: var(--dark-bg); color: var(--light-text);" class="py-16">
+        <div class="container">
+            <div class="footer-top">
+                <div class="footer-logo">
+                    <div class="logo-icon">
+                        <span>D</span>
+                    </div>
+                    <h2>La Délicatesse</h2>
+                </div>
+                <div class="footer-tagline">
+                    Experiencias gastronómicas que trascienden
+                </div>
+            </div>
+            
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Acerca de Nosotros</h3>
+                    <p>Conectamos clientes con chefs certificados para experiencias gastronómicas únicas en la comodidad de tu hogar.</p>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon">f</a>
+                        <a href="#" class="social-icon">t</a>
+                        <a href="#" class="social-icon">i</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Enlaces Rápidos</h3>
+                    <ul>
+                        <li><a href="#inicio">Inicio</a></li>
+                        <li><a href="#chefs">Chefs</a></li>
+                        <li><a href="#recetas">Recetas</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Soporte</h3>
+                    <ul>
+                        <li><a href="#">Centro de Ayuda</a></li>
+                        <li><a href="#">Términos de Servicio</a></li>
+                        <li><a href="#">Política de Privacidad</a></li>
+                        <li><a href="#">Preguntas Frecuentes</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contacto</h3>
+                    <ul class="contact-info">
+                        <li>
+                            <div class="contact-item">
+                                <span class="contact-icon">📧</span>
+                                <span>info@ladelicatesse.com</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="contact-item">
+                                <span class="contact-icon">📞</span>
+                                <span>+503 2222-3333</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="contact-item">
+                                <span class="contact-icon">📍</span>
+                                <span>San Salvador, El Salvador</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="copyright">
+                    &copy; 2025 La Délicatesse. Todos los derechos reservados.
+                </div>
+                <div class="footer-links">
+                    <a href="#">Términos</a>
+                    <a href="#">Privacidad</a>
+                    <a href="#">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h2>Bienvenido de Vuelta</h2>
+                    <p style="color: var(--text-light);">Inicia sesión en tu cuenta</p>
+                </div>
+                
+                <div class="auth-form active">
+                    <form id="loginForm" onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Contraseña</label>
+                            <input type="password" name="password" required>
+                        </div>
+                        <div class="remember-forgot">
+                            <div class="remember">
+                                <input type="checkbox" id="remember">
+                                <label for="remember">Recordarme</label>
+                            </div>
+                            <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            Iniciar Sesión
+                        </button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p>¿No tienes cuenta? 
+                            <a href="#" onclick="closeModal('loginModal'); openModal('registerModal')">Regístrate aquí</a>
+                        </p>
+                    </div>
+                </div>
+                
+                <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h2>Únete a La Délicatesse</h2>
+                    <p style="color: var(--text-light);">Crea tu cuenta y comienza tu experiencia gastronómica</p>
+                </div>
+                
+                <div class="auth-form active">
+                    <form id="registerForm" onsubmit="handleRegister(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nombre Completo</label>
+                                <input type="text" name="nombre" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" name="email" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Teléfono</label>
+                                <input type="tel" name="telefono">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Usuario</label>
+                                <select name="tipo_usuario" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="cliente">Cliente</option>
+                                    <option value="chef">Chef</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Contraseña</label>
+                            <input type="password" name="password" required>
+                        </div>
+                        <div class="form-group">
+                            <div class="terms">
+                                <input type="checkbox" id="terms" required>
+                                <label for="terms">Acepto los <a href="#">términos y condiciones</a> y la <a href="#">política de privacidad</a></label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            Crear Cuenta
+                        </button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p>¿Ya tienes cuenta? 
+                            <a href="#" onclick="closeModal('registerModal'); openModal('loginModal')">Inicia sesión aquí</a>
+                        </p>
+                    </div>
+                </div>
+                
+                <button onclick="closeModal('registerModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil del Chef - La Délicatesse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body style="background-color: var(--gray-bg);">
+    <!-- Header -->
+    <header style="background-color: var(--light-bg); box-shadow: var(--shadow);">
+        <div class="container">
+            <div class="flex justify-between items-center py-4">
+                <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                    <div class="logo-icon">
+                        <span>D</span>
+                    </div>
+                    <h1>La Délicatesse</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Navegación -->
+                    <nav class="hidden md:flex space-x-6">
+                        <a href="index.html" class="text-sm font-medium transition" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
+                            Inicio
+                        </a>
+                        <a href="chefs-catalog.html" class="text-sm font-medium transition" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
+                            Chefs
+                        </a>
+                        <a href="recipes-catalog.html" class="text-sm font-medium transition" style="color: var(--text-color);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-color)'">
+                            Recetas
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Chef Profile Section -->
+    <div class="container py-12">
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Chef Info -->
+            <div class="lg:col-span-1">
+                <div class="p-8 card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow);">
+                    <div class="text-center mb-6">
+                        <div class="w-48 h-48 mx-auto rounded-full overflow-hidden mb-4" style="border: 3px solid var(--primary-light);">
+                            <img id="chefImage" src="/placeholder.svg" alt="Chef" class="w-full h-full object-cover">
+                        </div>
+                        <h1 id="chefName" class="text-3xl font-bold mb-2" style="color: var(--primary-color); font-family: var(--font-heading);"></h1>
+                        <p id="chefSpecialty" class="text-lg" style="color: var(--text-light);"></p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="font-semibold mb-2" style="color: var(--primary-color);">Sobre mí</h3>
+                            <p id="chefBio" style="color: var(--text-color);"></p>
+                        </div>
+
+                        <div>
+                            <h3 class="font-semibold mb-2" style="color: var(--primary-color);">Experiencia</h3>
+                            <p id="chefExperience" style="color: var(--text-color);"></p>
+                        </div>
+
+                        <div>
+                            <h3 class="font-semibold mb-2" style="color: var(--primary-color);">Especialidades</h3>
+                            <p id="chefSpecialties" style="color: var(--text-color);"></p>
+                        </div>
+
+                        <div>
+                            <h3 class="font-semibold mb-2" style="color: var(--primary-color);">Calificación</h3>
+                            <div class="flex items-center justify-center">
+                                <span id="chefRating" class="text-2xl font-bold mr-2" style="color: var(--accent-color);"></span>
+                                <div id="chefStars" class="flex text-yellow-400"></div>
+                            </div>
+                            <p id="chefTotalServices" class="text-center mt-2" style="color: var(--text-light);"></p>
+                        </div>
+
+                        <div class="pt-4 border-t" style="border-color: var(--border-color);">
+                            <button id="bookChefBtn" class="btn btn-primary w-full mb-3">Reservar Chef</button>
+                            <button id="favoriteBtn" class="btn btn-outline w-full">❤️ Agregar a Favoritos</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chef's Recipes -->
+            <div class="lg:col-span-2">
+                <div class="p-8 card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow);">
+                    <h2 class="text-2xl font-bold mb-6" style="color: var(--primary-color); font-family: var(--font-heading);">Recetas del Chef</h2>
+                    <div id="chefRecipes" class="grid md:grid-cols-2 gap-6">
+                        <!-- Las recetas se cargarán dinámicamente aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/chef-profile.js"></script>
+</body>
+</html>
