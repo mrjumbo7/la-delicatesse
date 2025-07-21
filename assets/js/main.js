@@ -48,7 +48,7 @@ function updateUIForLoggedInUser() {
       authButtons.innerHTML = `
         <div class="flex items-center space-x-4">
           <span class="font-medium" style="color: var(--text-color); font-family: var(--font-body);">Hola, ${currentUser.nombre}</span>
-          <a href="client-dashboard.html" class="btn btn-primary">
+          <a href="user-profile.html" class="btn btn-primary">
             Mi Dashboard
           </a>
           <button onclick="logout()" class="text-red-600 hover:text-red-800 transition font-medium">
@@ -208,7 +208,7 @@ async function handleLogin(event) {
         }, 1000)
       } else if (currentUser.tipo_usuario === "cliente") {
         setTimeout(() => {
-          window.location.href = "client-dashboard.html"
+          window.location.href = "user-profile.html"
         }, 1000)
       } else {
         updateUIForLoggedInUser()
