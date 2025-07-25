@@ -1,1084 +1,721 @@
 // Chef Profile JavaScript
 
 // Global variables
-let chefData = null;
+let currentChef = null;
 let chefRecipes = [];
-let chefReviews = [];
-let currentUser = null;
-let isFavorite = false;
+let isAuthenticated = false;
+// currentUser is declared globally in main.js
 
-// Initialize the page
-document.addEventListener("DOMContentLoaded", async () => {
-    try {
-        // Verificar autenticación (ahora es asíncrono)
-        await checkAuthStatus();
-        
-        // Cargar datos del chef
-        await loadChefData();
-        
-        // Configurar eventos
-        setupEventListeners();
-        
-        console.log('Chef profile initialized successfully');
-    } catch (error) {
-        console.error('Error initializing chef profile:', error);
-        showToast('Error al inicializar la página. Por favor, recarga.', 'error');
-    } finally {
-        // No es necesario ocultar el indicador de carga ya que lo eliminamos
-    }
-});
+// Check authentication status
+function checkAuthStatus() {
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
 
-// Check if user is authenticated
-async function checkAuthStatus() {
-    const token = localStorage.getItem("authToken");
-    const userData = localStorage.getItem("userData");
-
-    // Verificar si hay token y datos de usuario
     if (token && userData) {
         try {
-            // Intentar parsear los datos del usuario
+            isAuthenticated = true;
             currentUser = JSON.parse(userData);
             
-            // Verificar que los datos del usuario sean válidos
-            if (!currentUser || !currentUser.id || !currentUser.tipo_usuario) {
-                throw new Error("Datos de usuario incompletos o inválidos");
+            // Actualizar UI para usuario autenticado
+            const authButtons = document.getElementById('authButtons');
+            if (authButtons) {
+                const userInitials = currentUser.nombre.split(' ').map(n => n[0]).join('').toUpperCase();
+                const profileImage = currentUser.foto_perfil || null;
+                
+                authButtons.innerHTML = `
+                    <div class="user-profile-section">
+                        <div class="user-avatar">
+                            ${profileImage ? 
+                                `<img src="${profileImage}" alt="${currentUser.nombre}" />` : 
+                                `<div class="user-avatar-placeholder">${userInitials}</div>`
+                            }
+                        </div>
+                        <div class="user-menu">
+                            <button class="user-menu-button">
+                                <div class="user-info">
+                                    <span class="user-name">${currentUser.nombre.split(' ')[0]}</span>
+                                    <span class="user-role">${currentUser.tipo_usuario === 'chef' ? 'Chef' : 'Cliente'}</span>
+                                </div>
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div class="user-menu-dropdown">
+                                <a href="user-profile.html">Mi Perfil</a>
+                                ${currentUser.tipo_usuario === 'chef' ? '<a href="dashboard.html">Dashboard</a>' : ''}
+                                <a href="#" onclick="handleLogout()">Cerrar Sesión</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
-            
-            // Verificar que el token sea válido (opcional: hacer una petición al servidor)
-            // const tokenValid = await validateToken(token);
-            // if (!tokenValid) throw new Error("Token inválido o expirado");
-            
-            // Actualizar la UI para usuario autenticado
-            updateUIForLoggedInUser();
-            console.log("Usuario autenticado:", currentUser.tipo_usuario);
-            
-            // No llamamos a checkIfFavorite() aquí porque se llamará después de cargar los datos del chef
-            return true;
+            console.log('Usuario autenticado:', currentUser.nombre);
         } catch (error) {
-            console.error("Error en la autenticación:", error);
-            
-            // Si hay un error, limpiar el almacenamiento local
-            localStorage.removeItem("authToken");
-            localStorage.removeItem("userData");
-            currentUser = null;
-            
-            // Mostrar mensaje de error (opcional)
-            // showToast("Sesión inválida. Por favor, inicia sesión nuevamente.", "warning");
+            console.error('Error al procesar datos de usuario:', error);
+            isAuthenticated = false;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
         }
+    } else {
+        console.log('Usuario no autenticado');
+        isAuthenticated = false;
+        // No redirigimos, solo mostramos el mensaje de que debe iniciar sesión
+        // window.location.href = 'index.html';
     }
-    
-    // Si no hay token, datos inválidos o hubo un error
-    currentUser = null;
-    
-    // Actualizar UI para usuario no autenticado
-    const authButtons = document.getElementById("authButtons");
-    if (authButtons) {
-        authButtons.innerHTML = `
-            <button onclick="openModal('loginModal')" class="btn btn-outline">Iniciar Sesión</button>
-            <button onclick="openModal('registerModal')" class="btn btn-primary">Registrarse</button>
-        `;
-    }
-    
-    return false;
-}
-
-// Update UI for logged in user
-function updateUIForLoggedInUser() {
-    const authButtons = document.getElementById("authButtons");
-
-    if (authButtons && currentUser) {
-        if (currentUser.tipo_usuario === "chef") {
-            // Show dashboard option for chefs
-            authButtons.innerHTML = `
-                <div class="flex items-center space-x-4">
-                    <span class="font-medium" style="color: var(--text-color); font-family: var(--font-body);">Hola, ${currentUser.nombre}</span>
-                    <a href="dashboard.html" class="btn btn-secondary">
-                        Dashboard Chef
-                    </a>
-                    <button onclick="logout()" class="text-red-600 hover:text-red-800 transition font-medium">
-                        Cerrar Sesión
-                    </button>
-                </div>
-            `;
-        } else {
-            // Show client dashboard for clients
-            authButtons.innerHTML = `
-                <div class="flex items-center space-x-4">
-                    <span class="font-medium" style="color: var(--text-color); font-family: var(--font-body);">Hola, ${currentUser.nombre}</span>
-                    <a href="user-profile.html" class="btn btn-primary">
-                        Mi Dashboard
-                    </a>
-                    <button onclick="logout()" class="text-red-600 hover:text-red-800 transition font-medium">
-                        Cerrar Sesión
-                    </button>
-                </div>
-            `;
-        }
-    }
-    
-    // Actualizar visibilidad de botones según tipo de usuario
-    const contactBtn = document.getElementById('contactChefBtn');
-    if (contactBtn && currentUser) {
-        contactBtn.style.display = (currentUser.tipo_usuario === 'cliente') ? 'inline-flex' : 'none';
-    }
-}
-
-// Setup event listeners
-function setupEventListeners() {
-    // Tab navigation
-    const tabs = document.querySelectorAll('.chef-profile-tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabId = tab.getAttribute('data-tab');
-            activateTab(tabId);
-        });
-    });
-
-    // Contact chef button
-    const contactBtn = document.getElementById('contactChefBtn');
-    if (contactBtn) {
-        contactBtn.addEventListener('click', contactChef);
-    }
-    
-    // Nota: El evento para el botón de favoritos se añade en updateFavoriteButton
-    // para asegurar que siempre esté actualizado con el estado correcto
-    
-    // Activar la pestaña de biografía por defecto
-    activateTab('bio');
 }
 
 // Load chef data
 async function loadChefData() {
     try {
-        // Get chef ID from URL parameter or localStorage
+        // Get chef ID from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
-        const chefId = urlParams.get('id') || localStorage.getItem("selectedChefId");
-        
+        const chefId = urlParams.get('id');
+
         if (!chefId) {
-            showToast("No se encontró el ID del chef", "error");
-            setTimeout(() => {
-                window.location.href = "chefs-catalog.html";
-            }, 1500);
-            return null;
+            console.error('Error: No se proporcionó ID del chef en la URL');
+            showToast('Error: No se proporcionó ID del chef', 'error');
+            window.location.href = 'index.html';
+            return;
         }
+
+        console.log('Cargando datos del chef con ID:', chefId);
+
+        // Get current language
+        const currentLang = window.currentLanguage || 'es';
+        console.log('Idioma actual:', currentLang);
+
+        // Fetch complete chef data with translations
+        const apiUrl = `api/chefs/profile-complete.php?chef_id=${chefId}&lang=${currentLang}`;
+        console.log('Consultando API:', apiUrl);
         
-        // Load chef details sin mostrar el indicador de carga
-        const response = await fetch(`api/chefs/list.php?id=${chefId}`);
+        const response = await fetch(apiUrl);
         
-        // Verificar si la respuesta es correcta
         if (!response.ok) {
-            throw new Error(`Error en la petición: ${response.status} ${response.statusText}`);
+            throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
         }
         
         const result = await response.json();
+        console.log('Respuesta de la API:', result);
 
-        if (result.success && result.data && result.data.length > 0) {
-            chefData = result.data[0];
+        if (result.success) {
+            currentChef = result.data;
+            console.log('Datos del chef cargados correctamente:', currentChef);
+            displayChefInfo();
+            displayChefStats();
+            displayChefReviews();
+            displayChefRecipes();
+            displayRecentServices();
             
-            // Actualizar la UI con los datos del chef inmediatamente
-            updateChefUI();
-            
-            // Cargar recetas y reseñas en paralelo para mejorar rendimiento
-            // pero sin mostrar indicadores de carga
-            Promise.allSettled([
-                loadChefRecipes(chefId, false),
-                loadChefReviews(chefId, false)
-            ]).then(([recipesResult, reviewsResult]) => {
-                // Manejar errores de carga de recetas
-                if (recipesResult.status === 'rejected') {
-                    console.error('Error cargando recetas:', recipesResult.reason);
-                }
-                
-                // Manejar errores de carga de reseñas
-                if (reviewsResult.status === 'rejected') {
-                    console.error('Error cargando reseñas:', reviewsResult.reason);
-                }
-            });
-            
-            // Check if chef is in favorites if user is logged in
-            if (currentUser && currentUser.tipo_usuario === 'cliente') {
-                checkIfFavorite();
-            } else {
-                // Si no es cliente o no está autenticado, actualizar el botón de favoritos
-                updateFavoriteButton(false);
+            // Solo actualizar el botón de favoritos si el usuario está autenticado
+            if (isAuthenticated) {
+                updateFavoriteButton();
             }
-            
-            return chefData;
         } else {
-            showToast("No se encontró información del chef solicitado", "error");
-            setTimeout(() => {
-                window.location.href = "chefs-catalog.html";
-            }, 2000);
-            return null;
+            console.error('Error en la respuesta de la API:', result.message || 'Error desconocido');
+            showToast(`Error al cargar la información del chef: ${result.message || 'Error desconocido'}`, 'error');
         }
     } catch (error) {
-        console.error("Error loading chef data:", error);
-        showToast("Error al cargar los datos del chef: " + (error.message || 'Error desconocido'), "error");
-        return null;
+        console.error('Error al cargar datos del chef:', error);
+        showToast(`Error al cargar la información del chef: ${error.message}`, 'error');
     }
 }
 
-// Update chef UI with loaded data
-function updateChefUI() {
-    if (!chefData) return;
-
-    // Update chef profile header
-    document.getElementById('chefName').textContent = chefData.nombre;
-    document.getElementById('chefSpecialty').textContent = chefData.especialidad;
-    document.getElementById('chefLocation').textContent = chefData.ubicacion;
-    document.getElementById('chefRating').innerHTML = generateStars(chefData.calificacion_promedio);
-    document.getElementById('chefServices').textContent = `(${chefData.total_servicios} servicios)`;
-    
-    if (chefData.foto_perfil) {
-        document.getElementById('chefImage').src = chefData.foto_perfil;
-    }
-
-    // Update chef bio tab
-    document.getElementById('chefBio').innerHTML = chefData.biografia || "No hay información biográfica disponible.";
-    document.getElementById('chefExperience').textContent = `${chefData.experiencia_anos} años de experiencia`;
-    document.getElementById('chefCertifications').innerHTML = chefData.certificaciones || "No hay certificaciones registradas.";
-    document.getElementById('chefPrice').textContent = `$${chefData.precio_por_hora} por hora`;
-
-    // Update page title
-    document.title = `${chefData.nombre} - La Délicatesse`;
-}
-
-// Load chef's recipes
-async function loadChefRecipes(chefId, showLoading = true) {
-    if (!chefId) {
-        console.error('ID de chef no proporcionado para cargar recetas');
+// Display chef information
+function displayChefInfo() {
+    if (!currentChef || !currentChef.profile) {
+        console.error('Error: currentChef or currentChef.profile is undefined');
+        showToast('Error al cargar la información del chef', 'error');
         return;
     }
     
     try {
-        const recipesContainer = document.getElementById('chefRecipes');
-        if (!recipesContainer) {
-            console.error('Contenedor de recetas no encontrado');
-            return;
-        }
+        const profile = currentChef.profile;
+        const stats = currentChef.estadisticas;
         
-        // Mostrar indicador de carga solo si se solicita
-        if (showLoading) {
-            recipesContainer.innerHTML = '<div class="loading-container"><div class="spinner-border text-primary" role="status"></div><p>Cargando recetas...</p></div>';
-        }
-        
-        const response = await fetch(`api/recipes/list.php?chef_id=${chefId}`);
-        
-        // Verificar si la respuesta es correcta
-        if (!response.ok) {
-            throw new Error(`Error en la petición: ${response.status} ${response.statusText}`);
-        }
-        
-        const result = await response.json();
+        document.title = `${profile.nombre} - La Délicatesse`;
+        document.getElementById('chefImage').src = profile.foto_perfil || '/placeholder.svg';
+        document.getElementById('chefName').textContent = profile.nombre;
+        document.getElementById('chefSpecialty').textContent = profile.especialidad;
+        document.getElementById('chefBio').textContent = profile.biografia;
+        document.getElementById('chefExperience').textContent = `${profile.experiencia_anos} ${window.currentLanguage === 'es' ? 'años de experiencia' : 'years of experience'}`;
+        document.getElementById('chefRating').textContent = stats.calificacion_promedio || '0.0';
+        document.getElementById('chefTotalServices').textContent = `${stats.servicios_completados || 0} ${window.currentLanguage === 'es' ? 'servicios completados' : 'services completed'}`;
 
-        if (result.success && result.data && result.data.length > 0) {
-            chefRecipes = result.data;
-            displayChefRecipes();
-            return result.data;
+        // Display stars
+        const starsContainer = document.getElementById('chefStars');
+        starsContainer.innerHTML = generateStars(stats.calificacion_promedio);
+
+        // Setup buttons
+        const bookChefBtn = document.getElementById('bookChefBtn');
+        bookChefBtn.onclick = () => bookChef(profile.id);
+        
+        // Cambiar el texto del botón de reserva si el usuario no está autenticado
+        if (!isAuthenticated) {
+            bookChefBtn.textContent = window.currentLanguage === 'es' ? 'Iniciar sesión para reservar' : 'Login to book';
         } else {
-            // No hay recetas o hubo un error
-            recipesContainer.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-utensils text-gray-400 text-5xl mb-4"></i>
-                    <p class="text-gray-500">Este chef aún no ha publicado recetas.</p>
-                </div>
-            `;
-            return [];
+            bookChefBtn.textContent = window.currentLanguage === 'es' ? 'Reservar Chef' : 'Book Chef';
+        }
+
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        favoriteBtn.onclick = () => toggleFavorite(profile.id);
+        
+        // Cambiar el texto del botón de favoritos si el usuario no está autenticado
+        if (!isAuthenticated) {
+            favoriteBtn.textContent = '❤️ ' + (window.currentLanguage === 'es' ? 'Iniciar sesión para agregar' : 'Login to add favorite');
         }
     } catch (error) {
-        console.error("Error loading chef recipes:", error);
-        const recipesContainer = document.getElementById('chefRecipes');
-        if (recipesContainer) {
-            recipesContainer.innerHTML = `
-                <div class="error-state">
-                    <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-3"></i>
-                    <p class="text-gray-700">Error al cargar las recetas.</p>
-                    <p class="text-gray-500 text-sm">${error.message || 'Intente nuevamente más tarde.'}</p>
+        console.error('Error en displayChefInfo:', error);
+        showToast('Error al mostrar la información del chef', 'error');
+    }
+}
+
+// Display chef statistics
+function displayChefStats() {
+    if (!currentChef || !currentChef.estadisticas) {
+        console.error('Error: No hay estadísticas del chef');
+        return;
+    }
+    
+    try {
+        const stats = currentChef.estadisticas;
+        
+        // Actualizar estadísticas en la información del chef
+        const statsHtml = `
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 p-4 rounded-lg" style="background-color: var(--bg-light);">
+                <div class="text-center">
+                    <div class="text-2xl font-bold" style="color: var(--primary-color);">${stats.total_servicios}</div>
+                    <div class="text-sm" style="color: var(--text-light);">Servicios Totales</div>
                 </div>
-            `;
-        }
-        throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
+                <div class="text-center">
+                    <div class="text-2xl font-bold" style="color: var(--primary-color);">${stats.servicios_completados}</div>
+                    <div class="text-sm" style="color: var(--text-light);">Completados</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold" style="color: var(--primary-color);">${stats.total_reviews}</div>
+                    <div class="text-sm" style="color: var(--text-light);">Reviews</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold" style="color: var(--primary-color);">${stats.tasa_completacion}%</div>
+                    <div class="text-sm" style="color: var(--text-light);">Tasa Éxito</div>
+                </div>
+            </div>
+        `;
+        
+        // Insertar después de la biografía
+        const bioElement = document.getElementById('chefBio').parentElement;
+        bioElement.insertAdjacentHTML('afterend', statsHtml);
+        
+    } catch (error) {
+        console.error('Error al mostrar estadísticas:', error);
     }
 }
 
 // Display chef's recipes
 function displayChefRecipes() {
-    const recipesContainer = document.getElementById('chefRecipes');
-    if (!recipesContainer) return;
-
-    if (chefRecipes.length === 0) {
-        recipesContainer.innerHTML = '<p class="text-gray-500">Este chef aún no ha publicado recetas.</p>';
-        return;
-    }
-
-    recipesContainer.innerHTML = chefRecipes
-        .map(recipe => {
-            // Asegurarse de que la descripción no sea demasiado larga
-            const descripcion = recipe.descripcion ? 
-                (recipe.descripcion.length > 100 ? 
-                    recipe.descripcion.substring(0, 97) + '...' : 
-                    recipe.descripcion) : 
-                "Receta deliciosa y fácil de preparar";
-                
-            return `
-                <div class="recipe-card">
-                    <div class="recipe-image">
-                        <img src="${recipe.imagen || "/placeholder.svg?height=220&width=300"}" 
-                             alt="${recipe.titulo}">
-                        <div class="recipe-badge">${recipe.dificultad}</div>
-                    </div>
-                    <div class="recipe-info">
-                        <h3>${recipe.titulo}</h3>
-                        <p class="chef">${descripcion}</p>
-                        
-                        <div class="recipe-meta">
-                            <span>⏱️ ${recipe.tiempo_preparacion} min</span>
-                            <span class="accent-text font-bold">$${recipe.precio}</span>
-                        </div>
-                        
-                        <button onclick="viewRecipe(${recipe.id})" class="btn btn-primary btn-block">
-                            Ver Receta
-                        </button>
-                    </div>
-                </div>
-            `;
-        })
-        .join('');
-}
-
-// Load chef's reviews
-async function loadChefReviews(chefId, showLoading = true) {
-    if (!chefId) {
-        console.error('ID de chef no proporcionado para cargar reseñas');
-        return;
-    }
-    
     try {
-        const reviewsContainer = document.getElementById('chefReviews');
-        if (!reviewsContainer) {
-            console.error('Contenedor de reseñas no encontrado');
+        console.log('Iniciando displayChefRecipes');
+        const recipesContainer = document.getElementById('chefRecipes');
+        
+        if (!recipesContainer) {
+            console.error('Error: Contenedor de recetas no encontrado en el DOM');
             return;
         }
         
-        // Mostrar indicador de carga solo si se solicita
-        if (showLoading) {
-            reviewsContainer.innerHTML = '<div class="loading-container"><div class="spinner-border text-primary" role="status"></div><p>Cargando reseñas...</p></div>';
+        // Verificar si el usuario está autenticado
+        if (!isAuthenticated) {
+            console.log('Usuario no autenticado, no se mostrarán las recetas');
+            recipesContainer.innerHTML = `
+                <div class="text-center col-span-full py-8">
+                    <p class="mb-4" style="color: var(--text-light);">Debes iniciar sesión para ver las recetas de este chef.</p>
+                    <button class="btn btn-primary login-to-view-recipes">Iniciar Sesión</button>
+                </div>
+            `;
+            return;
         }
         
-        const response = await fetch(`api/chefs/reviews.php?chef_id=${chefId}`);
-        
-        // Verificar si la respuesta es correcta
-        if (!response.ok) {
-            throw new Error(`Error en la petición: ${response.status} ${response.statusText}`);
-        }
-        
-        const result = await response.json();
+        const recipes = currentChef.recetas || [];
+        console.log(`Se encontraron ${recipes.length} recetas:`, recipes);
 
-        if (result.success) {
-            chefReviews = result.data || [];
+        if (recipes.length === 0) {
+            console.log('No hay recetas para mostrar');
+            recipesContainer.innerHTML = '<p class="text-center col-span-full" style="color: var(--text-light);">Este chef aún no ha publicado recetas.</p>';
+            return;
+        }
+        
+        let recipeHtml = '';
+        
+        recipes.forEach((recipe, index) => {
+            console.log(`Procesando receta ${index+1}/${recipes.length}:`, recipe);
             
-            // Mostrar reseñas
-            displayChefReviews();
-            
-            // Actualizar la calificación promedio en la UI si hay reseñas
-            if (result.data && result.data.length > 0) {
-                updateAverageRating(result.data);
-                return result.data;
-            } else {
-                // No hay reseñas
-                reviewsContainer.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-comment-slash text-gray-400 text-5xl mb-4"></i>
-                        <p class="text-gray-500">Este chef aún no tiene reseñas.</p>
-                        <p class="text-gray-400 text-sm">¡Sé el primero en dejar una reseña después de contratar sus servicios!</p>
-                    </div>
-                `;
-                return [];
+            if (!recipe || !recipe.nombre) {
+                console.warn(`Receta ${index+1} inválida:`, recipe);
+                return;
             }
-        } else {
-            // Error en la respuesta del servidor
-            reviewsContainer.innerHTML = `
-                <div class="error-state">
-                    <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-3"></i>
-                    <p class="text-gray-700">No se pudieron cargar las reseñas.</p>
-                    <p class="text-gray-500 text-sm">${result.message || 'Intente nuevamente más tarde.'}</p>
+            
+            const recipeCard = `
+                <div class="recipe-card bg-white rounded-lg overflow-hidden" style="box-shadow: var(--shadow);">
+                    <div class="recipe-image">
+                        <img src="${recipe.imagen || '/placeholder.svg?height=200&width=300'}" 
+                             alt="${recipe.nombre}" class="w-full h-48 object-cover">
+                    </div>
+                    <div class="recipe-info p-4">
+                        <h3 class="font-semibold mb-2" style="color: var(--primary-color); font-family: var(--font-heading);">${recipe.nombre}</h3>
+                        <p class="text-sm mb-3" style="color: var(--text-light);">${recipe.descripcion_corta || 'Sin descripción'}</p>
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center">
+                                <span class="text-sm mr-2" style="color: var(--text-light);">Dificultad:</span>
+                                <span class="text-sm font-medium" style="color: var(--primary-color);">${recipe.dificultad || 'N/A'}</span>
+                            </div>
+                            <span class="text-sm" style="color: var(--text-light);">${recipe.tiempo_preparacion || '0'} min</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold" style="color: var(--primary-color);">$${recipe.precio || '0'}</span>
+                            <button class="btn btn-sm btn-outline" onclick="viewRecipe(${recipe.id})">Ver Receta</button>
+                        </div>
+                    </div>
                 </div>
             `;
-            return [];
-        }
+            recipeHtml += recipeCard;
+        });
+        
+        // Actualizar el contenedor con el HTML generado
+        recipesContainer.innerHTML = recipeHtml;
+        console.log('Recetas mostradas correctamente');
     } catch (error) {
-        console.error("Error loading chef reviews:", error);
-        const reviewsContainer = document.getElementById('chefReviews');
-        if (reviewsContainer) {
-            reviewsContainer.innerHTML = `
-                <div class="error-state">
-                    <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-3"></i>
-                    <p class="text-gray-700">Error al cargar las reseñas.</p>
-                    <p class="text-gray-500 text-sm">${error.message || 'Intente nuevamente más tarde.'}</p>
-                </div>
-            `;
-        }
-        throw error; // Re-lanzar el error para que pueda ser manejado por el llamador
-    }
-}
-
-// Actualizar calificación promedio basada en las reseñas
-function updateAverageRating(reviews) {
-    if (!reviews || reviews.length === 0) return;
-    
-    // Calcular el promedio de calificaciones
-    const sum = reviews.reduce((total, review) => total + parseFloat(review.calificacion || 0), 0);
-    const average = sum / reviews.length;
-    
-    // Actualizar la UI solo si es necesario
-    const chefRating = document.getElementById('chefRating');
-    if (chefRating) {
-        chefRating.innerHTML = generateStars(average) + ` <span>(${average.toFixed(1)})</span>`;
+        console.error('Error al mostrar recetas:', error);
+        showToast('Error al mostrar las recetas', 'error');
     }
 }
 
 // Display chef's reviews
 function displayChefReviews() {
-    const reviewsContainer = document.getElementById('chefReviews');
-    if (!reviewsContainer) return;
-
-    if (!chefReviews || chefReviews.length === 0) {
-        reviewsContainer.innerHTML = '<p class="text-gray-500">Este chef aún no tiene reseñas.</p>';
-        return;
-    }
-
-    reviewsContainer.innerHTML = chefReviews
-        .map(review => {
-            // Determinar el título de la reseña basado en la calificación
-            let reviewTitle = review.titulo || "Experiencia con el chef";
-            if (!review.titulo) {
-                const puntuacion = parseFloat(review.calificacion) || 0;
-                if (puntuacion >= 4.5) reviewTitle = '¡Experiencia excepcional!';
-                else if (puntuacion >= 4) reviewTitle = 'Muy buena experiencia';
-                else if (puntuacion >= 3) reviewTitle = 'Experiencia satisfactoria';
-                else if (puntuacion >= 2) reviewTitle = 'Experiencia regular';
-                else reviewTitle = 'Experiencia decepcionante';
-            }
-            
-            // Crear contenido adicional si existen aspectos positivos o de mejora
-            let additionalContent = '';
-            if (review.aspectos_positivos || review.aspectos_mejora) {
-                additionalContent = `
-                    <div class="review-details mt-3">
-                        ${review.aspectos_positivos ? `<div class="review-positive"><strong>Lo que me gustó:</strong> ${review.aspectos_positivos}</div>` : ''}
-                        ${review.aspectos_mejora ? `<div class="review-improve"><strong>Aspectos a mejorar:</strong> ${review.aspectos_mejora}</div>` : ''}
-                    </div>
-                `;
-            } else {
-                // Generar aspectos positivos o de mejora predeterminados basados en la calificación
-                const puntuacion = parseFloat(review.calificacion) || 0;
-                if (puntuacion >= 3) {
-                    additionalContent = `
-                        <div class="review-details mt-3">
-                            <div class="review-positive"><strong>Lo que me gustó:</strong> Profesionalismo, calidad de la comida y atención al detalle.</div>
-                        </div>
-                    `;
-                } else {
-                    additionalContent = `
-                        <div class="review-details mt-3">
-                            <div class="review-improve"><strong>Aspectos a mejorar:</strong> Puntualidad, comunicación y variedad del menú.</div>
-                        </div>
-                    `;
-                }
-            }
-            
-            // Información del servicio
-            const serviceInfo = review.servicio_fecha ? `
-                <div class="review-service-info">
-                    <small>Servicio realizado el ${formatDate(review.servicio_fecha)}</small>
-                    ${review.servicio_ubicacion ? `<small> en ${review.servicio_ubicacion}</small>` : ''}
-                </div>
-            ` : '';
-            
-            // Recomendación
-            const recommendation = review.recomendaria !== undefined ? `
-                <div class="review-recommendation ${review.recomendaria ? 'positive' : 'negative'}">
-                    ${review.recomendaria ? '✓ Recomendaría este chef' : '✗ No recomendaría este chef'}
-                </div>
-            ` : `
-                <div class="review-recommendation ${parseFloat(review.calificacion) >= 3.5 ? 'positive' : 'negative'}">
-                    ${parseFloat(review.calificacion) >= 3.5 ? '✓ Recomendaría este chef' : '✗ No recomendaría este chef'}
-                </div>
-            `;
-            
-            return `
-                <div class="review-card">
-                    <div class="review-header">
-                        <div class="review-user">
-                            <div class="review-user-name">${review.cliente_nombre}</div>
-                            <div class="review-date">${formatDate(review.fecha)}</div>
-                        </div>
-                        <div class="review-rating">
-                            ${generateStars(review.calificacion)}
-                        </div>
-                    </div>
-                    <div class="review-content">
-                        <h3 class="review-title">${reviewTitle}</h3>
-                        <p class="review-text">${review.comentario || "Sin comentarios adicionales."}</p>
-                        ${additionalContent}
-                        ${recommendation}
-                        ${serviceInfo}
-                    </div>
-                </div>
-            `;
-        })
-        .join('');
-}
-
-// Check if chef is in user's favorites
-async function checkIfFavorite() {
-    // Verificar precondiciones
-    if (!currentUser) {
-        console.log('No hay usuario autenticado para verificar favoritos');
-        updateFavoriteButton(false);
-        return false;
-    }
-    
-    if (currentUser.tipo_usuario !== 'cliente') {
-        console.log('El usuario no es cliente, no puede tener favoritos');
-        updateFavoriteButton(false);
-        return false;
-    }
-    
-    if (!chefData || !chefData.id) {
-        console.log('No hay datos del chef para verificar favoritos');
-        updateFavoriteButton(false);
-        return false;
-    }
-
     try {
-        // Obtener token de autenticación
-        const token = localStorage.getItem("authToken");
-        if (!token) {
-            console.error('Token de autenticación no encontrado');
-            updateFavoriteButton(false);
-            return false;
+        const reviewsContainer = document.getElementById('chefReviews');
+        if (!reviewsContainer) {
+            console.log('Contenedor de reseñas no encontrado');
+            return;
         }
-        
-        // Realizar petición para obtener favoritos
-        const response = await fetch("api/client/favorites.php", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Accept': 'application/json'
-            },
-        });
-        
-        // Verificar si la respuesta es correcta
-        if (!response.ok) {
-            throw new Error(`Error en la petición: ${response.status} ${response.statusText}`);
-        }
-        
-        const result = await response.json();
 
-        if (result.success && Array.isArray(result.data)) {
-            const favorites = result.data;
-            
-            // Verificar si el chef actual está en la lista de favoritos
-            // Asegurarse de que ambos IDs sean números para comparación correcta
-            const chefId = parseInt(chefData.id);
-            isFavorite = favorites.some(chef => parseInt(chef.id) === chefId);
-            
-            console.log(`Chef ${chefData.nombre} ${isFavorite ? 'está' : 'no está'} en favoritos`);
-            updateFavoriteButton(isFavorite);
-            return isFavorite;
-        } else {
-            console.warn('No se pudieron obtener los favoritos:', result.message || 'Error desconocido');
-            updateFavoriteButton(false);
-            return false;
+        const reviews = currentChef.resenas || [];
+        console.log('Mostrando reseñas:', reviews);
+
+        if (reviews.length === 0) {
+            reviewsContainer.innerHTML = '<p class="text-center" style="color: var(--text-light);">Este chef aún no tiene reseñas.</p>';
+            return;
         }
+
+        let reviewsHtml = '';
+        reviews.forEach(review => {
+            const reviewCard = `
+                <div class="review-card bg-white p-4 rounded-lg mb-4" style="box-shadow: var(--shadow);">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-semibold" style="color: var(--primary-color);">${review.nombre_cliente}</h4>
+                            <div class="flex items-center mt-1">
+                                ${generateStars(review.calificacion)}
+                                <span class="ml-2 text-sm" style="color: var(--text-light);">${review.calificacion}/5</span>
+                            </div>
+                        </div>
+                        <span class="text-sm" style="color: var(--text-light);">${new Date(review.fecha_calificacion).toLocaleDateString()}</span>
+                    </div>
+                    <p class="text-sm mb-2" style="color: var(--text-dark);">${review.comentario}</p>
+                    ${review.aspectos_positivos ? `<p class="text-sm text-green-600"><strong>Aspectos positivos:</strong> ${review.aspectos_positivos}</p>` : ''}
+                    ${review.aspectos_mejora ? `<p class="text-sm text-orange-600"><strong>Aspectos a mejorar:</strong> ${review.aspectos_mejora}</p>` : ''}
+                </div>
+            `;
+            reviewsHtml += reviewCard;
+        });
+
+        reviewsContainer.innerHTML = reviewsHtml;
+        console.log('Reseñas mostradas correctamente');
     } catch (error) {
-        console.error("Error checking favorites:", error);
-        showToast("No se pudo verificar si el chef está en favoritos", "warning");
-        updateFavoriteButton(false);
-        return false;
+        console.error('Error al mostrar reseñas:', error);
+        showToast('Error al mostrar las reseñas', 'error');
     }
 }
 
-// Update favorite button based on favorite status
-function updateFavoriteButton(isVisible = true) {
-    const favBtn = document.getElementById('addToFavoritesBtn');
-    if (!favBtn) {
-        console.warn('Botón de favoritos no encontrado en el DOM');
-        return;
-    }
+// Display recent services
+function displayRecentServices() {
+    try {
+        const servicesContainer = document.getElementById('recentServices');
+        if (!servicesContainer) {
+            console.log('Contenedor de servicios recientes no encontrado');
+            return;
+        }
 
-    // Verificar si el botón debe ser visible
-    if (!isVisible || !currentUser || currentUser.tipo_usuario !== 'cliente') {
-        // Si no es un cliente o no debe ser visible, ocultar el botón
-        favBtn.style.display = 'none';
-        return;
+        const services = currentChef.servicios_recientes || [];
+        console.log('Mostrando servicios recientes:', services);
+
+        if (services.length === 0) {
+            servicesContainer.innerHTML = '<p class="text-center" style="color: var(--text-light);">No hay servicios recientes para mostrar.</p>';
+            return;
+        }
+
+        let servicesHtml = '';
+        services.forEach(service => {
+            const serviceCard = `
+                <div class="service-card bg-white p-4 rounded-lg mb-4" style="box-shadow: var(--shadow);">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-semibold" style="color: var(--primary-color);">${service.nombre_cliente}</h4>
+                            <p class="text-sm" style="color: var(--text-light);">Servicio: ${service.tipo_servicio}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-medium" style="color: var(--primary-color);">$${service.precio_total}</span>
+                            <p class="text-sm" style="color: var(--text-light);">${new Date(service.fecha_servicio).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <p class="text-sm" style="color: var(--text-dark);">${service.descripcion}</p>
+                    <div class="mt-2">
+                        <span class="inline-block px-2 py-1 text-xs rounded" style="background-color: var(--accent-color); color: white;">
+                            ${service.estado}
+                        </span>
+                    </div>
+                </div>
+            `;
+            servicesHtml += serviceCard;
+        });
+
+        servicesContainer.innerHTML = servicesHtml;
+        console.log('Servicios recientes mostrados correctamente');
+    } catch (error) {
+        console.error('Error al mostrar servicios recientes:', error);
+        showToast('Error al mostrar los servicios recientes', 'error');
     }
-    
-    // Mostrar el botón para clientes
-    favBtn.style.display = 'inline-flex';
-    
-    // Actualizar el aspecto del botón según el estado de favorito
-    if (isFavorite) {
-        favBtn.innerHTML = '<i class="fas fa-heart"></i> Quitar de favoritos';
-        favBtn.classList.add("is-favorite");
-        favBtn.setAttribute('aria-label', 'Quitar este chef de tus favoritos');
-        favBtn.setAttribute('title', 'Quitar de favoritos');
-    } else {
-        favBtn.innerHTML = '<i class="far fa-heart"></i> Añadir a favoritos';
-        favBtn.classList.remove("is-favorite");
-        favBtn.setAttribute('aria-label', 'Añadir este chef a tus favoritos');
-        favBtn.setAttribute('title', 'Añadir a favoritos');
-    }
-    
-    // Asegurarse de que el botón tenga el evento click correcto
-    // Primero remover cualquier evento existente para evitar duplicados
-    favBtn.removeEventListener('click', toggleFavorite);
-    favBtn.addEventListener('click', toggleFavorite);
 }
 
 // Toggle favorite status
-async function toggleFavorite() {
-    // Verificar si el usuario está autenticado
-    if (!currentUser) {
-        showToast("Debes iniciar sesión para añadir favoritos", "warning");
-        openModal("loginModal");
+async function toggleFavorite(chefId) {
+    if (!isAuthenticated) {
+        showToast('Debes iniciar sesión para agregar favoritos', 'warning');
+        openModal('loginModal');
         return;
     }
-
-    // Verificar si el usuario es cliente
-    if (currentUser.tipo_usuario !== 'cliente') {
-        showToast("Solo los clientes pueden añadir favoritos", "warning");
-        return;
-    }
-
-    // Verificar si hay datos del chef
-    if (!chefData || !chefData.id) {
-        showToast("No se puede identificar al chef", "error");
+    
+    if (!chefId) {
+        console.error('Error: ID del chef no proporcionado');
+        showToast('Error al actualizar favoritos: ID del chef no válido', 'error');
         return;
     }
 
     try {
-        // Cambiar el botón a un estado de carga
-        const favoriteBtn = document.getElementById('addToFavoritesBtn');
-        const originalBtnContent = favoriteBtn.innerHTML;
-        favoriteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
-        favoriteBtn.disabled = true;
-        // Obtener token de autenticación
-        const token = localStorage.getItem("authToken");
+        console.log('Actualizando estado de favorito para chef ID:', chefId);
+        const token = localStorage.getItem('authToken');
+        
         if (!token) {
-            throw new Error("Token de autenticación no encontrado");
+            console.error('Error: Token de autenticación no encontrado');
+            showToast('Error de autenticación', 'error');
+            return;
         }
         
-        // Determinar la acción basada en el estado actual de favorito
-        const endpoint = isFavorite ? 'api/client/remove-favorite.php' : 'api/client/add-favorite.php';
-        const action = isFavorite ? 'eliminar de' : 'añadir a';
-        
-        // Realizar la petición para cambiar el estado de favorito
-        const toggleResponse = await fetch(endpoint, {
+        const response = await fetch('api/client/favorites.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({
-                type: 'chef',
-                id: chefData.id
-            })
+            body: JSON.stringify({ chef_id: chefId })
         });
-        
-        // Verificar si la respuesta es correcta
-        if (!toggleResponse.ok) {
-            throw new Error(`Error en la petición: ${toggleResponse.status} ${toggleResponse.statusText}`);
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
         }
         
-        const toggleResult = await toggleResponse.json();
-        
-        if (toggleResult.success) {
-            // Actualizar el estado local de favorito
-            isFavorite = !isFavorite;
-            
-            // Actualizar la interfaz
+        const result = await response.json();
+        console.log('Respuesta de toggle favorito:', result);
+
+        if (result.success) {
             updateFavoriteButton();
-            
-            // Mostrar mensaje de éxito
-            showToast(`Chef ${action} favoritos correctamente`, "success");
-            
-            // Actualizar contador de favoritos si existe
-            const favCounter = document.getElementById('favoritesCount');
-            if (favCounter) {
-                const currentCount = parseInt(favCounter.textContent) || 0;
-                favCounter.textContent = isFavorite ? currentCount + 1 : Math.max(0, currentCount - 1);
-            }
+            showToast(result.message, 'success');
         } else {
-            // Mostrar mensaje de error del servidor
-            showToast(toggleResult.message || `Error al ${action} favoritos`, "error");
+            console.error('Error en la respuesta de toggle favorito:', result.message || 'Error desconocido');
+            showToast(result.message || 'Error al actualizar favoritos', 'error');
         }
     } catch (error) {
-        console.error("Error toggling favorite:", error);
-        showToast(`Error al actualizar favoritos: ${error.message}`, "error");
-    } finally {
-        hideLoading();
+        console.error('Error al actualizar favoritos:', error);
+        showToast(`Error al actualizar favoritos: ${error.message}`, 'error');
     }
 }
 
-// Logout function
-function logout() {
-    // Limpiar datos de autenticación
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    
-    // Limpiar otros datos almacenados que puedan ser sensibles
-    localStorage.removeItem('selectedChefId');
-    localStorage.removeItem('selectedChefName');
-    localStorage.removeItem('selectedChefSpecialty');
-    localStorage.removeItem('selectedChefPrice');
-    
-    // Mostrar mensaje de éxito
-    showToast('Sesión cerrada correctamente', 'success');
-    
-    // Redireccionar a la página principal
-    setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 1000);
-}
-
-// Contact chef function
-function contactChef() {
-    if (!currentUser) {
-        showToast("Debes iniciar sesión para contactar un chef", "warning");
-        openModal("loginModal");
-        return;
-    }
-
-    if (currentUser.tipo_usuario !== 'cliente') {
-        showToast("Solo los clientes pueden contactar chefs", "warning");
-        return;
-    }
-
-    if (!chefData) return;
-
-    // Guardar datos del chef seleccionado
-    localStorage.setItem("selectedChefId", chefData.id);
-    localStorage.setItem("selectedChefName", chefData.nombre);
-    localStorage.setItem("selectedChefSpecialty", chefData.especialidad);
-    localStorage.setItem("selectedChefPrice", chefData.precio_por_hora);
-    
-    // Redirigir a la página de reserva
-    window.location.href = "booking.html";
-}
-
-// Open modal function
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) {
-        console.error(`Modal with ID ${modalId} not found`);
+// Update favorite button state
+async function updateFavoriteButton() {
+    if (!isAuthenticated) {
+        console.log('Usuario no autenticado, no se actualizará el botón de favoritos');
         return;
     }
     
-    // Cerrar cualquier modal abierto primero
-    const openModals = document.querySelectorAll('.modal.active');
-    openModals.forEach(openModal => {
-        openModal.classList.remove('active');
-        openModal.style.display = 'none';
-    });
-    
-    // Mostrar el modal solicitado
-    modal.classList.add('active');
-    modal.style.display = 'flex';
-    
-    // Añadir evento para cerrar al hacer clic fuera del contenido
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        modal.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                closeModal(modalId);
-            }
-        });
+    if (!currentChef || !currentChef.profile || !currentChef.profile.id) {
+        console.error('Error: No hay información del chef para actualizar favoritos');
+        return;
     }
-    
-    // Añadir evento para cerrar con la tecla Escape
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeModal(modalId);
+
+    try {
+        console.log('Actualizando estado del botón de favoritos');
+        const token = localStorage.getItem('authToken');
+        
+        if (!token) {
+            console.error('Error: Token de autenticación no encontrado');
+            return;
         }
-    });
+        
+        const response = await fetch('api/client/favorites.php', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('Respuesta de favoritos:', result);
+
+        if (result.success) {
+            const favoriteBtn = document.getElementById('favoriteBtn');
+            
+            if (!favoriteBtn) {
+                console.error('Error: Botón de favoritos no encontrado en el DOM');
+                return;
+            }
+            
+            const isFavorite = result.data && Array.isArray(result.data) && result.data.some(fav => fav.id === currentChef.profile.id);
+            console.log('¿Es favorito?:', isFavorite);
+            
+            if (isFavorite) {
+                favoriteBtn.classList.add('active');
+                favoriteBtn.textContent = '❤️ Quitar de Favoritos';
+            } else {
+                favoriteBtn.classList.remove('active');
+                favoriteBtn.textContent = '❤️ Agregar a Favoritos';
+            }
+        } else {
+            console.error('Error en la respuesta de favoritos:', result.message || 'Error desconocido');
+        }
+    } catch (error) {
+        console.error('Error al actualizar favoritos:', error);
+    }
 }
 
-// Close modal function
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('active');
-        modal.style.display = 'none';
+// Book chef function
+function bookChef(chefId) {
+    try {
+        console.log('Iniciando proceso de reserva de chef');
         
-        // Eliminar eventos para evitar duplicados
-        modal.removeEventListener('click', function(event) {
-            if (event.target === modal) {
-                closeModal(modalId);
-            }
-        });
+        if (!isAuthenticated) {
+            console.log('Usuario no autenticado intentando reservar chef');
+            showToast('Debes iniciar sesión para hacer una reserva', 'warning');
+            openModal('loginModal');
+            return;
+        }
         
-        document.removeEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal(modalId);
-            }
-        });
+        if (!chefId) {
+            console.error('Error: ID del chef no proporcionado para reserva');
+            showToast('Error al intentar reservar: ID del chef no válido', 'error');
+            return;
+        }
+        
+        // Verificar que el token de autenticación exista
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.error('Error: Token de autenticación no encontrado');
+            showToast('Error de autenticación. Por favor, inicia sesión nuevamente', 'error');
+            return;
+        }
+        
+        console.log('Redirigiendo a página de reserva para chef ID:', chefId);
+        window.location.href = `index.html#booking?chef=${chefId}`;
+    } catch (error) {
+        console.error('Error al procesar la reserva:', error);
+        showToast('Error al procesar la reserva', 'error');
     }
+}
+
+// Generate star rating
+function generateStars(rating) {
+    if (!rating || isNaN(rating)) {
+        console.warn('Calificación inválida:', rating);
+        rating = 0;
+    }
+    
+    // Convertir a número si es string
+    rating = parseFloat(rating);
+    
+    // Limitar entre 0 y 5
+    rating = Math.max(0, Math.min(5, rating));
+    
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    let stars = '★'.repeat(fullStars);
+    if (hasHalfStar) stars += '½';
+    
+    // Completar con estrellas vacías hasta 5
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    if (emptyStars > 0) {
+        stars += '☆'.repeat(emptyStars);
+    }
+    
+    return stars;
 }
 
 // View recipe function
 function viewRecipe(recipeId) {
-    if (!recipeId) {
-        showToast("Error al seleccionar la receta", "error");
-        return;
-    }
-    
-    // Guardar ID de la receta seleccionada
-    localStorage.setItem("selectedRecipeId", recipeId);
-    
-    // Redirigir a la página de detalle de receta
-    window.location.href = "recipe-detail.html";
-}
-
-// Tab navigation
-function activateTab(tabId) {
-    // Hide all tab panes
-    document.querySelectorAll('.tab-pane').forEach(pane => {
-        pane.classList.remove('active');
-    });
-    
-    // Deactivate all tabs
-    document.querySelectorAll('.chef-profile-tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Activate selected tab and pane
-    document.getElementById(`${tabId}Tab`).classList.add('active');
-    document.getElementById(`${tabId}Content`).classList.add('active');
-}
-
-// Generate star rating HTML
-function generateStars(rating) {
-    // Asegurarse de que rating sea un número
-    const numRating = parseFloat(rating) || 0;
-    
-    // Limitar el rating entre 0 y 5
-    const clampedRating = Math.max(0, Math.min(5, numRating));
-    
-    const fullStars = Math.floor(clampedRating);
-    const halfStar = clampedRating % 1 >= 0.5;
-    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-    
-    let starsHTML = "";
-    
-    // Full stars
-    for (let i = 0; i < fullStars; i++) {
-        starsHTML += '<i class="fas fa-star"></i>';
-    }
-    
-    // Half star
-    if (halfStar) {
-        starsHTML += '<i class="fas fa-star-half-alt"></i>';
-    }
-    
-    // Empty stars
-    for (let i = 0; i < emptyStars; i++) {
-        starsHTML += '<i class="far fa-star"></i>';
-    }
-    
-    return starsHTML;
-}
-
-// Format date
-function formatDate(dateString) {
-    if (!dateString) return 'Fecha no disponible';
-    
-    try {
-        const date = new Date(dateString);
-        
-        // Verificar si la fecha es válida
-        if (isNaN(date.getTime())) {
-            return 'Fecha inválida';
-        }
-        
-        return new Intl.DateTimeFormat("es-SV", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        }).format(date);
-    } catch (error) {
-        console.error('Error al formatear fecha:', error);
-        return 'Error en formato de fecha';
-    }
-}
-
-// Show loading indicator
-function showLoading(message = 'Cargando...') {
-    let loader = document.getElementById('globalLoader');
-    
-    // Crear el loader si no existe
-    if (!loader) {
-        loader = document.createElement('div');
-        loader.id = 'globalLoader';
-        loader.className = 'global-loader fixed inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center z-50';
-        
-        // Usar spinner de Bootstrap para mejor apariencia
-        loader.innerHTML = `
-            <div class="spinner-container">
-                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                    <span class="sr-only">Cargando...</span>
-                </div>
-                <p class="loading-text mt-3 text-white">${message}</p>
-            </div>
-        `;
-        
-        document.body.appendChild(loader);
-    } else {
-        // Actualizar el mensaje si el loader ya existe
-        const loadingText = loader.querySelector('.loading-text');
-        if (loadingText) {
-            loadingText.textContent = message;
-        }
-    }
-    
-    // Mostrar el loader
-    loader.style.display = 'flex';
-    
-    // Añadir clase al body para bloquear scroll
-    document.body.classList.add('loading');
-    
-    return loader;
-}
-
-// Hide loading indicator
-function hideLoading() {
-    const loader = document.getElementById('globalLoader');
-    if (loader) {
-        // Añadir clase para animación de salida
-        loader.classList.add('fade-out');
-        
-        // Ocultar después de la animación
-        setTimeout(() => {
-            loader.style.display = 'none';
-            loader.classList.remove('fade-out');
-            document.body.classList.remove('loading');
-        }, 300);
-    } else {
-        // Si no hay loader, solo quitar la clase del body
-        document.body.classList.remove('loading');
-    }
+    // Redirect to recipe detail page
+    window.location.href = `recipe-detail.html?id=${recipeId}`;
 }
 
 // Show toast notification
-function showToast(message, type = 'info', duration = 5000) {
-    // Validar parámetros
-    if (!message) return;
-    if (!['info', 'success', 'error', 'warning'].includes(type)) type = 'info';
-    if (isNaN(duration) || duration < 1000) duration = 5000;
+function showToast(message, type = 'info') {
+    console.log(`Toast (${type}): ${message}`);
     
-    // Crear el contenedor de toasts si no existe
+    // Crear elemento toast si no existe
     let toastContainer = document.getElementById('toastContainer');
+    
     if (!toastContainer) {
         toastContainer = document.createElement('div');
         toastContainer.id = 'toastContainer';
-        toastContainer.className = 'toast-container';
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.bottom = '20px';
+        toastContainer.style.right = '20px';
+        toastContainer.style.zIndex = '9999';
         document.body.appendChild(toastContainer);
     }
     
-    // Crear el toast
+    // Crear toast
     const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'assertive');
+    toast.className = 'toast';
+    toast.style.minWidth = '250px';
+    toast.style.margin = '10px';
+    toast.style.padding = '15px';
+    toast.style.borderRadius = '4px';
+    toast.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+    toast.style.transition = 'all 0.3s ease';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
     
-    // Determinar el icono según el tipo
-    let icon = 'fa-info-circle';
-    let iconColor = 'var(--color-info, #3498db)';
-    
-    if (type === 'success') {
-        icon = 'fa-check-circle';
-        iconColor = 'var(--color-success, #2ecc71)';
-    } else if (type === 'error') {
-        icon = 'fa-exclamation-circle';
-        iconColor = 'var(--color-error, #e74c3c)';
+    // Establecer color según el tipo
+    if (type === 'error') {
+        toast.style.backgroundColor = '#f44336';
+        toast.style.color = 'white';
+    } else if (type === 'success') {
+        toast.style.backgroundColor = '#4CAF50';
+        toast.style.color = 'white';
     } else if (type === 'warning') {
-        icon = 'fa-exclamation-triangle';
-        iconColor = 'var(--color-warning, #f39c12)';
+        toast.style.backgroundColor = '#ff9800';
+        toast.style.color = 'white';
+    } else {
+        toast.style.backgroundColor = '#2196F3';
+        toast.style.color = 'white';
     }
     
-    toast.innerHTML = `
-        <div class="toast-content">
-            <div class="toast-icon">
-                <i class="fas ${icon}" style="color: ${iconColor}"></i>
-            </div>
-            <div class="toast-message">${message}</div>
-        </div>
-        <button class="toast-close" aria-label="Cerrar notificación">&times;</button>
-    `;
+    // Agregar mensaje
+    toast.textContent = message;
     
-    // Añadir el toast al contenedor
+    // Agregar al contenedor
     toastContainer.appendChild(toast);
     
-    // Configurar el botón de cierre
-    const closeButton = toast.querySelector('.toast-close');
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            closeToast(toast);
+    // Mostrar con animación
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Ocultar después de 5 segundos
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        
+        // Eliminar después de la animación
+        setTimeout(() => {
+            toastContainer.removeChild(toast);
+        }, 300);
+    }, 5000);
+}
+
+// Handle logout
+function handleLogout() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    window.location.href = 'index.html';
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Inicializando página de perfil de chef');
+    
+    // Verificar autenticación
+    checkAuthStatus();
+    
+    // Obtener elementos del DOM
+    const authRequiredElement = document.getElementById('authRequired');
+    const chefProfileContentElement = document.getElementById('chefProfileContent');
+    const authButtons = document.getElementById('authButtons');
+    
+    if (!authRequiredElement || !chefProfileContentElement) {
+        console.error('Error: Elementos del DOM no encontrados');
+        return;
+    }
+    
+    // Obtener ID del chef de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const chefId = urlParams.get('id');
+    
+    if (!chefId) {
+        console.error('Error: No se proporcionó ID del chef en la URL');
+        showToast('Error: No se proporcionó ID del chef', 'error');
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    console.log('ID del chef obtenido de la URL:', chefId);
+    
+    // Siempre mostrar el perfil del chef, pero las recetas solo si está autenticado
+    console.log('Mostrando perfil del chef');
+    authRequiredElement.classList.add('hidden');
+    chefProfileContentElement.classList.remove('hidden');
+    loadChefData();
+    
+    // Si el usuario no está autenticado, mostrar los botones de inicio de sesión
+    if (!isAuthenticated && authButtons) {
+        authButtons.innerHTML = `
+            <button onclick="openModal('loginModal')" class="btn btn-primary" data-translate="iniciar_sesion">
+                Iniciar Sesión
+            </button>
+            <button onclick="openModal('registerModal')" class="btn btn-outline" data-translate="registrarse">
+                Registrarse
+            </button>
+        `;
+    }
+    
+    // Event listener for session changes
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'authToken' || e.key === 'userType') {
+            checkAuthStatus();
+            if (chefId) {
+                loadChefData();
+            }
+        }
+    });
+    
+    // Language toggle functionality
+    const languageToggle = document.getElementById('languageToggle');
+    if (languageToggle) {
+        languageToggle.addEventListener('click', function() {
+            const currentLang = localStorage.getItem('language') || 'es';
+            const newLang = currentLang === 'es' ? 'en' : 'es';
+            localStorage.setItem('language', newLang);
+            
+            // Reload chef data with new language
+            if (chefId) {
+                loadChefData();
+            }
         });
     }
     
-    // Añadir clase para animación de entrada
-    requestAnimationFrame(() => {
-        toast.classList.add('show');
-    });
-    
-    // Auto remove after duration
-    const timeoutId = setTimeout(() => {
-        closeToast(toast);
-    }, duration);
-    
-    // Guardar el ID del timeout para poder cancelarlo si es necesario
-    toast.dataset.timeoutId = timeoutId;
-    
-    // Pausar el timeout al pasar el mouse por encima
-    toast.addEventListener('mouseenter', () => {
-        clearTimeout(toast.dataset.timeoutId);
-    });
-    
-    // Reanudar el timeout al quitar el mouse
-    toast.addEventListener('mouseleave', () => {
-        toast.dataset.timeoutId = setTimeout(() => {
-            closeToast(toast);
-        }, 2000);
-    });
-    
-    return toast;
-}
-
-// Función para cerrar un toast con animación
-function closeToast(toast) {
-    if (!toast) return;
-    
-    // Limpiar cualquier timeout pendiente
-    if (toast.dataset.timeoutId) {
-        clearTimeout(parseInt(toast.dataset.timeoutId));
-    }
-    
-    // Añadir clase para animación de salida
-    toast.classList.remove('show');
-    toast.classList.add('hide');
-    
-    // Eliminar después de la animación de salida
-    setTimeout(() => {
-        if (toast.parentElement) {
-            toast.remove();
-            
-            // Eliminar el contenedor si está vacío
-            const toastContainer = document.getElementById('toastContainer');
-            if (toastContainer && toastContainer.children.length === 0) {
-                toastContainer.remove();
-            }
+    // Event delegation for login button in recipes section
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('login-to-view-recipes')) {
+            openModal('loginModal');
         }
-    }, 300);
-}
+    });
+});

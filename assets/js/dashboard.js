@@ -1,7 +1,7 @@
 // Dashboard JavaScript for La Délicatesse
 
 // Global variables
-let currentUser = null
+// currentUser is declared globally in main.js
 let currentSection = "overview"
 let services = []
 let userRecipes = []

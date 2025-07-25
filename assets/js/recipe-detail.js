@@ -3,7 +3,7 @@
 // Global variables
 let recipeData = null;
 let relatedRecipes = [];
-let currentUser = null;
+// currentUser is declared globally in main.js
 let isFavorite = false;
 
 // Initialize the page

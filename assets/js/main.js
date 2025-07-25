@@ -30,33 +30,35 @@ function updateUIForLoggedInUser() {
   const authButtons = document.getElementById("authButtons")
 
   if (authButtons && currentUser) {
-    if (currentUser.tipo_usuario === "chef") {
-      // Show dashboard option for chefs
-      authButtons.innerHTML = `
-        <div class="flex items-center space-x-4">
-          <span class="font-medium" style="color: var(--text-color); font-family: var(--font-body);">Hola, ${currentUser.nombre}</span>
-          <a href="dashboard.html" class="btn btn-secondary">
-            Dashboard Chef
-          </a>
-          <button onclick="logout()" class="text-red-600 hover:text-red-800 transition font-medium">
-            Cerrar Sesión
-          </button>
+    const userInitials = currentUser.nombre.split(' ').map(n => n[0]).join('').toUpperCase();
+    const profileImage = currentUser.foto_perfil || null;
+    
+    authButtons.innerHTML = `
+      <div class="user-profile-section">
+        <div class="user-avatar">
+          ${profileImage ? 
+            `<img src="${profileImage}" alt="${currentUser.nombre}" />` : 
+            `<div class="user-avatar-placeholder">${userInitials}</div>`
+          }
         </div>
-      `
-    } else {
-      // Show client dashboard for clients
-      authButtons.innerHTML = `
-        <div class="flex items-center space-x-4">
-          <span class="font-medium" style="color: var(--text-color); font-family: var(--font-body);">Hola, ${currentUser.nombre}</span>
-          <a href="user-profile.html" class="btn btn-primary">
-            Mi Dashboard
-          </a>
-          <button onclick="logout()" class="text-red-600 hover:text-red-800 transition font-medium">
-            Cerrar Sesión
+        <div class="user-menu">
+          <button class="user-menu-button">
+            <div class="user-info">
+              <span class="user-name">${currentUser.nombre.split(' ')[0]}</span>
+              <span class="user-role">${currentUser.tipo_usuario === 'chef' ? 'Chef' : 'Cliente'}</span>
+            </div>
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
           </button>
+          <div class="user-menu-dropdown">
+            <a href="user-profile.html">Mi Perfil</a>
+            ${currentUser.tipo_usuario === 'chef' ? '<a href="dashboard.html">Dashboard</a>' : ''}
+            <a href="#" onclick="logout()">Cerrar Sesión</a>
+          </div>
         </div>
-      `
-    }
+      </div>
+    `;
   }
 }
 
@@ -268,9 +270,11 @@ async function loadChefs() {
 
     if (result.success) {
       // Ordenar chefs por calificación promedio de mayor a menor
-      chefs = result.data.sort((a, b) => b.calificacion_promedio - a.calificacion_promedio)
+      chefs = result.data.sort((a, b) => (b.calificacion_promedio || 0) - (a.calificacion_promedio || 0))
       // Mostrar solo los primeros 4 chefs
       displayChefs(chefs.slice(0, 4))
+    } else {
+      console.error("Error en la respuesta de chefs:", result.message)
     }
   } catch (error) {
     console.error("Error loading chefs:", error)
@@ -331,11 +335,6 @@ function displayChefs(chefsToShow) {
     .join("")
 }
 
-// View chef profile
-function viewChefProfile(chefId) {
-    window.location.href = `chef-profile.html?id=${chefId}`;
-}
-
 // Generate star rating HTML
 function generateStars(rating) {
   const fullStars = Math.floor(rating)
@@ -382,7 +381,7 @@ function searchChefs() {
 
   // Ordenar por calificación y mostrar solo los 4 mejores
   const topChefs = filteredChefs
-    .sort((a, b) => b.calificacion_promedio - a.calificacion_promedio)
+    .sort((a, b) => (b.calificacion_promedio || 0) - (a.calificacion_promedio || 0))
     .slice(0, 4)
 
   displayChefs(topChefs)
@@ -396,9 +395,11 @@ async function loadRecipes() {
 
     if (result.success) {
       // Ordenar recetas por calificación promedio de mayor a menor
-      recipes = result.data.sort((a, b) => b.calificacion_promedio - a.calificacion_promedio)
+      recipes = result.data.sort((a, b) => (b.calificacion_promedio || 0) - (a.calificacion_promedio || 0))
       // Mostrar solo las primeras 4 recetas
       displayRecipes(recipes.slice(0, 4))
+    } else {
+      console.error("Error en la respuesta de recetas:", result.message)
     }
   } catch (error) {
     console.error("Error loading recipes:", error)
@@ -423,7 +424,7 @@ function filterRecipes() {
 
   // Ordenar por calificación y mostrar solo las 4 mejores
   const topRecipes = filteredRecipes
-    .sort((a, b) => b.calificacion_promedio - a.calificacion_promedio)
+    .sort((a, b) => (b.calificacion_promedio || 0) - (a.calificacion_promedio || 0))
     .slice(0, 4)
 
   displayRecipes(topRecipes)
@@ -470,10 +471,6 @@ function displayRecipes(recipesToShow) {
 }
 
 // Chef profile functions
-function viewChefProfile(chefId) {
-  localStorage.setItem("selectedChefId", chefId)
-  window.location.href = "chef-profile.html"
-}
 
 function contactChef(chefId) {
   if (!currentUser) {

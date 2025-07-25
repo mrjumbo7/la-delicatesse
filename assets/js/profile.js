@@ -1,7 +1,7 @@
 // JavaScript para la página de perfil de usuario
 
 // Variables globales
-let currentUser = null
+// currentUser is declared globally in main.js
 let userPreferences = []
 let favoriteChefs = []
 let favoriteRecipes = []
