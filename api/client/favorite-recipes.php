@@ -13,7 +13,7 @@ if ($user['tipo_usuario'] !== 'cliente') {
 }
 
 // Obtener el ID del usuario autenticado
-$userId = $user['id'];
+$userId = $user['user_id'];
 
 // Conectar a la base de datos
 $db = new Database();
@@ -25,8 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         // Verificar si la tabla existe
         $tableExists = false;
-        $result = $conn->query("SHOW TABLES LIKE 'recetas_favoritas'");
-        if ($result->num_rows > 0) {
+        $stmt = $conn->prepare("SHOW TABLES LIKE 'recetas_favoritas'");
+        $stmt->execute();
+        if ($stmt->rowCount() > 0) {
             $tableExists = true;
         }
         
@@ -46,14 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             WHERE rf.cliente_id = ?
             ORDER BY rf.fecha_agregado DESC
         ");
-        $stmt->bind_param("i", $userId);
+        $stmt->bindParam(1, $userId, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
         
-        $favoriteRecipes = [];
-        while ($row = $result->fetch_assoc()) {
-            $favoriteRecipes[] = $row;
-        }
+        $favoriteRecipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         // Devolver respuesta exitosa
         echo json_encode(['success' => true, 'data' => $favoriteRecipes]);
@@ -78,14 +75,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         // Verificar si la tabla existe
         $tableExists = false;
-        $result = $conn->query("SHOW TABLES LIKE 'recetas_favoritas'");
-        if ($result->num_rows > 0) {
+        $stmt = $conn->prepare("SHOW TABLES LIKE 'recetas_favoritas'");
+        $stmt->execute();
+        if ($stmt->rowCount() > 0) {
             $tableExists = true;
         }
         
         if (!$tableExists) {
             // Crear la tabla si no existe
-            $conn->query("
+            $conn->exec("
                 CREATE TABLE recetas_favoritas (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     cliente_id INT NOT NULL,
@@ -100,22 +98,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         // Verificar si la receta ya está en favoritos
         $stmt = $conn->prepare("SELECT id FROM recetas_favoritas WHERE cliente_id = ? AND receta_id = ?");
-        $stmt->bind_param("ii", $userId, $recipeId);
+        $stmt->bindParam(1, $userId, PDO::PARAM_INT);
+        $stmt->bindParam(2, $recipeId, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
         
-        if ($result->num_rows > 0) {
+        if ($stmt->rowCount() > 0) {
             echo json_encode(['success' => false, 'message' => 'Esta receta ya está en tus favoritos']);
             exit;
         }
         
         // Verificar que la receta exista
         $stmt = $conn->prepare("SELECT id FROM recetas WHERE id = ?");
-        $stmt->bind_param("i", $recipeId);
+        $stmt->bindParam(1, $recipeId, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
         
-        if ($result->num_rows === 0) {
+        if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'La receta no existe']);
             exit;
@@ -123,7 +120,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         // Añadir receta a favoritos
         $stmt = $conn->prepare("INSERT INTO recetas_favoritas (cliente_id, receta_id) VALUES (?, ?)");
-        $stmt->bind_param("ii", $userId, $recipeId);
+        $stmt->bindParam(1, $userId, PDO::PARAM_INT);
+        $stmt->bindParam(2, $recipeId, PDO::PARAM_INT);
         $stmt->execute();
         
         // Devolver respuesta exitosa
@@ -140,5 +138,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo json_encode(['success' => false, 'message' => 'Método no permitido']);
 }
 
-// Cerrar conexión
-$conn->close();
+// En PDO no es necesario cerrar la conexión explícitamente, se cierra automáticamente
+// cuando la variable $conn sale del ámbito
+$conn = null;

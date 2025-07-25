@@ -13,7 +13,7 @@ if ($user['tipo_usuario'] !== 'cliente') {
 }
 
 // Obtener el ID del usuario autenticado
-$userId = $user['id'];
+$userId = $user['user_id'];
 
 // Obtener datos del cuerpo de la solicitud
 $data = json_decode(file_get_contents('php://input'), true);
@@ -36,23 +36,24 @@ try {
     if ($type === 'chef') {
         // Eliminar chef de favoritos
         $stmt = $conn->prepare("DELETE FROM chefs_favoritos WHERE cliente_id = ? AND chef_id = ?");
-        $stmt->bind_param("ii", $userId, $id);
+        $stmt->bindParam(1, $userId, PDO::PARAM_INT);
+        $stmt->bindParam(2, $id, PDO::PARAM_INT);
         $stmt->execute();
         
-        if ($stmt->affected_rows > 0) {
+        if ($stmt->rowCount() > 0) {
             echo json_encode(['success' => true, 'message' => 'Chef eliminado de favoritos']);
         } else {
             echo json_encode(['success' => false, 'message' => 'El chef no estaba en favoritos o ya fue eliminado']);
         }
     } 
     else if ($type === 'recipe') {
-        // Eliminar receta de favoritas (asumiendo que existe una tabla recetas_favoritas)
-        // Nota: Esta tabla no existe en el esquema actual, se debe crear
+        // Eliminar receta de favoritas
         $stmt = $conn->prepare("DELETE FROM recetas_favoritas WHERE cliente_id = ? AND receta_id = ?");
-        $stmt->bind_param("ii", $userId, $id);
+        $stmt->bindParam(1, $userId, PDO::PARAM_INT);
+        $stmt->bindParam(2, $id, PDO::PARAM_INT);
         $stmt->execute();
         
-        if ($stmt->affected_rows > 0) {
+        if ($stmt->rowCount() > 0) {
             echo json_encode(['success' => true, 'message' => 'Receta eliminada de favoritos']);
         } else {
             echo json_encode(['success' => false, 'message' => 'La receta no estaba en favoritos o ya fue eliminada']);
@@ -67,5 +68,6 @@ try {
     echo json_encode(['success' => false, 'message' => 'Error al eliminar de favoritos: ' . $e->getMessage()]);
 }
 
-// Cerrar conexión
-$conn->close();
+// En PDO no es necesario cerrar la conexión explícitamente, se cierra automáticamente
+// cuando la variable $conn sale del ámbito
+$conn = null;

@@ -347,10 +347,6 @@ function displayFavoriteRecipes() {
   const recipesContainer = document.getElementById("favoriteRecipes")
   if (!recipesContainer) return
 
-  // Por ahora mostrar mensaje de que no hay API implementada
-  recipesContainer.innerHTML = '<p class="text-gray-500 col-span-full text-center">Funcionalidad en desarrollo.</p>'
-  
-  /* Implementación futura cuando exista la API
   if (favoriteRecipes.length === 0) {
     recipesContainer.innerHTML = '<p class="text-gray-500 col-span-full text-center">No tienes recetas favoritas.</p>'
     return
@@ -368,7 +364,7 @@ function displayFavoriteRecipes() {
                 <h4>${recipe.titulo}</h4>
                 <p>Chef: ${recipe.chef_nombre}</p>
                 <div class="favorite-price">
-                    $${recipe.precio.toFixed(2)}
+                    $${recipe.precio ? recipe.precio.toFixed(2) : "N/A"}
                 </div>
                 <div class="favorite-actions">
                     <button onclick="viewRecipe(${recipe.id})" class="btn btn-sm btn-outline">
@@ -383,7 +379,6 @@ function displayFavoriteRecipes() {
       `
     )
     .join("")
-  */
 }
 
 // Cargar reseñas del usuario
@@ -412,10 +407,6 @@ function displayUserReviews() {
   const reviewsContainer = document.getElementById("userReviews")
   if (!reviewsContainer) return
 
-  // Por ahora mostrar mensaje de que no hay API implementada
-  reviewsContainer.innerHTML = '<p class="text-gray-500 text-center">Funcionalidad en desarrollo.</p>'
-  
-  /* Implementación futura cuando exista la API
   if (userReviews.length === 0) {
     reviewsContainer.innerHTML = '<p class="text-gray-500 text-center">No has realizado reseñas aún.</p>'
     return
@@ -449,7 +440,6 @@ function displayUserReviews() {
       `
     )
     .join("")
-  */
 }
 
 // Actualizar perfil
@@ -478,7 +468,18 @@ async function updateProfile(event) {
       const userData = JSON.parse(localStorage.getItem("userData"))
       userData.nombre = formData.get("nombre")
       userData.email = formData.get("email")
+      userData.telefono = formData.get("telefono")
       localStorage.setItem("userData", JSON.stringify(userData))
+      
+      // Actualizar UI
+      document.getElementById("userName").textContent = userData.nombre
+      document.getElementById("userEmail").textContent = userData.email
+      
+      // Actualizar en el header si existe
+      const headerUserName = document.querySelector(".auth-buttons .font-medium")
+      if (headerUserName) {
+        headerUserName.textContent = `Hola, ${userData.nombre}`
+      }
       
       // Recargar perfil
       loadUserProfile()
@@ -530,6 +531,42 @@ async function updatePreferences(event) {
   }
 }
 
+// Añadir a favoritos
+async function addToFavorites(type, id) {
+  try {
+    showLoading()
+    
+    const response = await fetch(`api/client/add-favorite.php`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+      body: JSON.stringify({ type, id }),
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      showToast("Añadido a favoritos exitosamente", "success")
+      
+      // Recargar lista de favoritos
+      if (type === "chef") {
+        loadFavoriteChefs()
+      } else if (type === "recipe") {
+        loadFavoriteRecipes()
+      }
+    } else {
+      showToast(result.message || "Error al añadir a favoritos", "error")
+    }
+  } catch (error) {
+    console.error("Add to favorites error:", error)
+    showToast("Error de conexión", "error")
+  } finally {
+    hideLoading()
+  }
+}
+
 // Eliminar de favoritos
 async function removeFromFavorites(type, id) {
   try {
@@ -562,6 +599,61 @@ async function removeFromFavorites(type, id) {
     }
   } catch (error) {
     console.error("Remove from favorites error:", error)
+    showToast("Error de conexión", "error")
+  } finally {
+    hideLoading()
+  }
+}
+
+// Ver perfil de chef
+function viewChefProfile(chefId) {
+  window.location.href = `chef-profile.html?id=${chefId}`
+}
+
+// Ver receta
+function viewRecipe(recipeId) {
+  window.location.href = `recipe-details.html?id=${recipeId}`
+}
+
+// Editar reseña
+function editReview(reviewId) {
+  const review = userReviews.find(r => r.id === reviewId)
+  if (!review) return
+  
+  // Aquí se implementaría la lógica para editar la reseña
+  // Por ejemplo, mostrar un modal con un formulario
+  alert('Funcionalidad de edición de reseñas en desarrollo')
+}
+
+// Eliminar reseña
+async function deleteReview(reviewId) {
+  if (!confirm('¿Estás seguro de que deseas eliminar esta reseña?')) return
+  
+  try {
+    showLoading()
+    
+    const response = await fetch(`api/client/reviews.php`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+      body: JSON.stringify({ id: reviewId }),
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      showToast("Reseña eliminada exitosamente", "success")
+      
+      // Actualizar lista de reseñas
+      userReviews = userReviews.filter(review => review.id !== reviewId)
+      displayUserReviews()
+    } else {
+      showToast(result.message || "Error al eliminar reseña", "error")
+    }
+  } catch (error) {
+    console.error("Delete review error:", error)
     showToast("Error de conexión", "error")
   } finally {
     hideLoading()

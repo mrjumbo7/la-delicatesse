@@ -1,0 +1,465 @@
+/* Estilos para las páginas de perfil de chef y detalle de receta */
+
+/* Estilos generales */
+.chef-recipe-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-heading);
+}
+
+.page-header p {
+    color: var(--text-light);
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* Perfil del chef */
+.chef-profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background-color: var(--gray-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow);
+}
+
+.chef-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--light-bg);
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.chef-name {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-heading);
+}
+
+.chef-specialty {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.chef-rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chef-rating .stars {
+    color: var(--accent-color);
+}
+
+.chef-location {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+}
+
+.chef-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Navegación por pestañas */
+.chef-profile-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    overflow-x: auto;
+}
+
+.chef-profile-tab {
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: var(--transition);
+}
+
+.chef-profile-tab:hover {
+    color: var(--primary-color);
+}
+
+.chef-profile-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+/* Biografía */
+.chef-bio {
+    line-height: 1.8;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+}
+
+/* Recetas del chef */
+.chef-recipes {
+    margin-bottom: 3rem;
+}
+
+.recipes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+/* Reseñas */
+.chef-reviews {
+    margin-bottom: 3rem;
+}
+
+.review-card {
+    background-color: var(--light-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.reviewer-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.reviewer-name {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.review-date {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.review-rating {
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.review-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.review-content {
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* Detalle de receta */
+.recipe-detail-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background-color: var(--gray-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow);
+}
+
+.recipe-image {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.recipe-title {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-heading);
+}
+
+.recipe-category {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.recipe-chef {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.recipe-chef img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.recipe-chef a {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.recipe-chef a:hover {
+    text-decoration: underline;
+}
+
+.recipe-meta {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.recipe-meta-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.recipe-meta-label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.recipe-meta-value {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.recipe-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Pestañas de receta */
+.recipe-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    overflow-x: auto;
+}
+
+.recipe-tab {
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: var(--transition);
+}
+
+.recipe-tab:hover {
+    color: var(--primary-color);
+}
+
+.recipe-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+/* Descripción de receta */
+.recipe-description {
+    line-height: 1.8;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+}
+
+/* Ingredientes */
+.recipe-ingredients {
+    margin-bottom: 2rem;
+}
+
+.ingredients-list {
+    list-style: none;
+    padding: 0;
+}
+
+.ingredients-list li {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+}
+
+.ingredients-list li:before {
+    content: "•";
+    color: var(--primary-color);
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.5em;
+}
+
+/* Instrucciones */
+.recipe-instructions {
+    margin-bottom: 3rem;
+}
+
+.instructions-list {
+    list-style: none;
+    padding: 0;
+    counter-reset: instruction;
+}
+
+.instructions-list li {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+.instructions-list li:before {
+    counter-increment: instruction;
+    content: counter(instruction);
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: bold;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+/* Recetas relacionadas */
+.related-recipes {
+    margin-top: 4rem;
+}
+
+.related-recipes h3 {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-family: var(--font-heading);
+}
+
+/* Botón de favoritos */
+.favorite-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--light-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.favorite-btn:hover {
+    background-color: var(--gray-bg);
+}
+
+.favorite-btn.active {
+    background-color: var(--primary-light);
+    color: var(--light-text);
+    border-color: var(--primary-color);
+}
+
+.favorite-btn i {
+    font-size: 1.2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .chef-profile-header,
+    .recipe-detail-header {
+        padding: 1.5rem;
+    }
+    
+    .chef-avatar {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .chef-name,
+    .recipe-title {
+        font-size: 1.8rem;
+    }
+    
+    .chef-actions,
+    .recipe-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .chef-actions .btn,
+    .recipe-actions .btn {
+        width: 100%;
+    }
+    
+    .recipes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .recipe-meta {
+        gap: 1rem;
+    }
+}
