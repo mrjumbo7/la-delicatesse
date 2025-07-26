@@ -138,6 +138,161 @@
         </div>
     </footer>
 
+    <!-- Recipe Detail Modal -->
+    <div id="recipeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="recipe-modal-header p-6 border-b">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h2 id="modalRecipeTitle" class="text-3xl font-bold mb-2" style="color: var(--primary-color); font-family: var(--font-heading);">Cargando...</h2>
+                            <p id="modalRecipeChef" class="text-lg" style="color: var(--text-light);">Por Chef...</p>
+                        </div>
+                        <button onclick="closeModal('recipeModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                            ×
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="recipe-modal-content p-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="recipe-modal-image">
+                            <img id="modalRecipeImage" src="" alt="" class="w-full h-64 object-cover rounded-lg">
+                            <div class="mt-4 flex gap-4">
+                                <div class="flex items-center gap-2">
+                                    <span>⏱️</span>
+                                    <span id="modalRecipeTime">0 min</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span>👨‍🍳</span>
+                                    <span id="modalRecipeDifficulty">Fácil</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span>💰</span>
+                                    <span id="modalRecipePrice" class="font-bold" style="color: var(--accent-color);">$0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="recipe-modal-info">
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold mb-3" style="color: var(--primary-color);">Descripción</h3>
+                                <p id="modalRecipeDescription" style="color: var(--text-color);">Cargando descripción...</p>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold mb-3" style="color: var(--primary-color);">Ingredientes</h3>
+                                <ul id="modalRecipeIngredients" class="list-disc list-inside space-y-1" style="color: var(--text-color);">
+                                    <li>Cargando ingredientes...</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold mb-3" style="color: var(--primary-color);">Instrucciones</h3>
+                                <ol id="modalRecipeInstructions" class="list-decimal list-inside space-y-2" style="color: var(--text-color);">
+                                    <li>Cargando instrucciones...</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button id="modalBuyRecipeBtn" class="btn btn-primary flex-1">
+                                    Comprar Receta
+                                </button>
+                                <button id="modalAddToFavoritesBtn" class="btn btn-outline">
+                                    ❤️ Favoritos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-md w-full p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold" style="color: var(--primary-color);">Iniciar Sesión</h2>
+                    <button onclick="closeModal('loginModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                        ×
+                    </button>
+                </div>
+                
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" name="email" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Contraseña</label>
+                        <input type="password" name="password" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">
+                        Iniciar Sesión
+                    </button>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p>¿No tienes cuenta? 
+                        <a href="#" onclick="closeModal('loginModal'); openModal('registerModal')" class="text-primary hover:underline">Regístrate aquí</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-md w-full p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold" style="color: var(--primary-color);">Registrarse</h2>
+                    <button onclick="closeModal('registerModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                        ×
+                    </button>
+                </div>
+                
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Nombre Completo</label>
+                        <input type="text" name="nombre" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" name="email" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Teléfono</label>
+                        <input type="tel" name="telefono" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Tipo de Usuario</label>
+                        <select name="tipo_usuario" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                            <option value="">Seleccionar...</option>
+                            <option value="cliente">Cliente</option>
+                            <option value="chef">Chef</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Contraseña</label>
+                        <input type="password" name="password" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">
+                        Crear Cuenta
+                    </button>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p>¿Ya tienes cuenta? 
+                        <a href="#" onclick="closeModal('registerModal'); openModal('loginModal')" class="text-primary hover:underline">Inicia sesión aquí</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/main.js"></script>
     <script src="assets/js/catalog.js"></script>
 </body>

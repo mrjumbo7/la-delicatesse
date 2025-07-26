@@ -38,7 +38,7 @@
                     </nav>
                     
                     <!-- Desktop Auth Buttons -->
-                    <div class="auth-buttons">
+                    <div id="authButtons" class="auth-buttons">
                         <button onclick="openModal('loginModal')" class="btn btn-primary" data-translate="iniciar_sesion">
                             Iniciar Sesión
                         </button>
@@ -457,6 +457,77 @@
             </div>
         </div>
     </footer>
+
+    <!-- Recipe Detail Modal -->
+    <div id="recipeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="recipe-modal-header p-6 border-b">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h2 id="modalRecipeTitle" class="text-3xl font-bold mb-2" style="color: var(--primary-color); font-family: var(--font-heading);">Cargando...</h2>
+                            <p id="modalRecipeChef" class="text-lg" style="color: var(--text-light);">Por Chef...</p>
+                        </div>
+                        <button onclick="closeModal('recipeModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                            ×
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="recipe-modal-content p-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="recipe-modal-image">
+                            <img id="modalRecipeImage" src="" alt="" class="w-full h-64 object-cover rounded-lg">
+                            <div class="mt-4 flex gap-4">
+                                <div class="flex items-center gap-2">
+                                    <span>⏱️</span>
+                                    <span id="modalRecipeTime">0 min</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span>👨‍🍳</span>
+                                    <span id="modalRecipeDifficulty">Fácil</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span>💰</span>
+                                    <span id="modalRecipePrice" class="font-bold" style="color: var(--accent-color);">$0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="recipe-modal-info">
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold mb-3" style="color: var(--primary-color);">Descripción</h3>
+                                <p id="modalRecipeDescription" style="color: var(--text-color);">Cargando descripción...</p>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold mb-3" style="color: var(--primary-color);">Ingredientes</h3>
+                                <ul id="modalRecipeIngredients" class="list-disc list-inside space-y-1" style="color: var(--text-color);">
+                                    <li>Cargando ingredientes...</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold mb-3" style="color: var(--primary-color);">Instrucciones</h3>
+                                <ol id="modalRecipeInstructions" class="list-decimal list-inside space-y-2" style="color: var(--text-color);">
+                                    <li>Cargando instrucciones...</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button id="modalBuyRecipeBtn" class="btn btn-primary flex-1">
+                                    Comprar Receta
+                                </button>
+                                <button id="modalAddToFavoritesBtn" class="btn btn-outline">
+                                    ❤️ Favoritos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modals -->
     <!-- Login Modal -->

@@ -10,16 +10,20 @@ try {
     $db = $database->getConnection();
     
     $chef_id = isset($_GET['chef_id']) ? $_GET['chef_id'] : null;
+    $recipe_id = isset($_GET['id']) ? $_GET['id'] : null;
     
     $query = "SELECT r.*, u.nombre as chef_nombre, 
-                     COALESCE(AVG(c.puntuacion), 0) as calificacion_promedio
+                     COALESCE(AVG(c.puntuacion), 0) as calificacion_promedio,
+                     COUNT(cr.id) as total_compras
               FROM recetas r
               INNER JOIN usuarios u ON r.chef_id = u.id
               LEFT JOIN compras_recetas cr ON r.id = cr.receta_id
               LEFT JOIN calificaciones c ON cr.cliente_id = c.cliente_id AND r.chef_id = c.chef_id
               WHERE r.activa = 1";
     
-    if ($chef_id) {
+    if ($recipe_id) {
+        $query .= " AND r.id = :recipe_id";
+    } elseif ($chef_id) {
         $query .= " AND r.chef_id = :chef_id";
     }
     
@@ -27,7 +31,9 @@ try {
     
     $stmt = $db->prepare($query);
     
-    if ($chef_id) {
+    if ($recipe_id) {
+        $stmt->bindParam(':recipe_id', $recipe_id, PDO::PARAM_INT);
+    } elseif ($chef_id) {
         $stmt->bindParam(':chef_id', $chef_id, PDO::PARAM_INT);
     }
     

@@ -196,6 +196,128 @@ function displayRecipesCatalog(recipesToShow) {
     `).join('')
 }
 
+// View recipe function - opens modal instead of redirecting
+function viewRecipe(recipeId) {
+    // Check if user is authenticated
+    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    
+    if (!user) {
+        showToast('Debes iniciar sesión para ver los detalles de las recetas', 'warning')
+        openModal('loginModal')
+        return
+    }
+    
+    // Load recipe data and open modal
+    loadRecipeModal(recipeId)
+}
+
+// Load recipe data for modal
+async function loadRecipeModal(recipeId) {
+    try {
+        showLoading()
+        
+        const response = await fetch(`api/recipes/list.php?id=${recipeId}`)
+        const result = await response.json()
+        
+        if (result.success && result.data.length > 0) {
+            const recipe = result.data[0]
+            populateRecipeModal(recipe)
+            openModal('recipeModal')
+        } else {
+            showToast('No se pudo cargar la información de la receta', 'error')
+        }
+    } catch (error) {
+        console.error('Error loading recipe:', error)
+        showToast('Error al cargar la receta', 'error')
+    } finally {
+        hideLoading()
+    }
+}
+
+// Populate recipe modal with data
+function populateRecipeModal(recipe) {
+    // Update modal content
+    document.getElementById('modalRecipeTitle').textContent = recipe.titulo
+    document.getElementById('modalRecipeChef').textContent = `Por Chef ${recipe.chef_nombre}`
+    document.getElementById('modalRecipeTime').textContent = `${recipe.tiempo_preparacion} min`
+    document.getElementById('modalRecipeDifficulty').textContent = recipe.dificultad
+    document.getElementById('modalRecipePrice').textContent = formatCurrency(recipe.precio)
+    document.getElementById('modalRecipeDescription').textContent = recipe.descripcion
+    
+    // Update image
+    const modalImage = document.getElementById('modalRecipeImage')
+    modalImage.src = recipe.imagen || '/placeholder.svg?height=300&width=400'
+    modalImage.alt = recipe.titulo
+    
+    // Update ingredients
+    const ingredientsList = document.getElementById('modalRecipeIngredients')
+    if (recipe.ingredientes) {
+        const ingredients = recipe.ingredientes.split('\n').filter(ing => ing.trim())
+        if (ingredients.length > 0) {
+            ingredientsList.innerHTML = ingredients.map(ingredient => 
+                `<li>${ingredient.trim()}</li>`
+            ).join('')
+        } else {
+            ingredientsList.innerHTML = '<li>No hay ingredientes disponibles</li>'
+        }
+    } else {
+        ingredientsList.innerHTML = '<li>No hay ingredientes disponibles</li>'
+    }
+    
+    // Update instructions
+    const instructionsList = document.getElementById('modalRecipeInstructions')
+    if (recipe.instrucciones) {
+        const instructions = recipe.instrucciones.split('\n').filter(inst => inst.trim())
+        if (instructions.length > 0) {
+            instructionsList.innerHTML = instructions.map((instruction, index) => 
+                `<li>${instruction.trim()}</li>`
+            ).join('')
+        } else {
+            instructionsList.innerHTML = '<li>No hay instrucciones disponibles</li>'
+        }
+    } else {
+        instructionsList.innerHTML = '<li>No hay instrucciones disponibles</li>'
+    }
+    
+    // Setup buy button
+    const buyBtn = document.getElementById('modalBuyRecipeBtn')
+    buyBtn.onclick = () => buyRecipe(recipe.id)
+    
+    // Setup favorites button
+    const favBtn = document.getElementById('modalAddToFavoritesBtn')
+    favBtn.onclick = () => addToFavorites(recipe.id)
+}
+
+// Buy recipe function
+function buyRecipe(recipeId) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    
+    if (!user) {
+        showToast('Debes iniciar sesión para comprar recetas', 'warning')
+        closeModal('recipeModal')
+        openModal('loginModal')
+        return
+    }
+    
+    // Here you would implement the actual purchase logic
+    showToast('Funcionalidad de compra en desarrollo', 'info')
+}
+
+// Add to favorites function
+function addToFavorites(recipeId) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    
+    if (!user) {
+        showToast('Debes iniciar sesión para añadir a favoritos', 'warning')
+        closeModal('recipeModal')
+        openModal('loginModal')
+        return
+    }
+    
+    // Here you would implement the actual favorites logic
+    showToast('Receta añadida a favoritos', 'success')
+}
+
 // Filter recipes in catalog
 function filterRecipes() {
     const searchTerm = document.getElementById("searchRecipes")?.value.toLowerCase() || ""

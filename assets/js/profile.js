@@ -8,8 +8,8 @@ let favoriteRecipes = []
 let userReviews = []
 
 // Inicializar la página
-document.addEventListener("DOMContentLoaded", () => {
-  checkAuthStatus()
+document.addEventListener("DOMContentLoaded", async () => {
+  await checkAuthStatus()
   setupEventListeners()
   
   // Configurar navegación entre tabs
@@ -39,11 +39,34 @@ document.addEventListener("DOMContentLoaded", () => {
 })
 
 // Verificar si el usuario está autenticado
-function checkAuthStatus() {
+async function checkAuthStatus() {
   const token = localStorage.getItem("authToken")
   const userData = localStorage.getItem("userData")
 
   if (token && userData) {
+    try {
+      // Validate token with server
+      const response = await fetch("api/auth/validate.php", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        // Token is invalid, redirect to index
+        localStorage.removeItem("authToken")
+        localStorage.removeItem("userData")
+        window.location.href = "index.html"
+        return
+      }
+    } catch (error) {
+      console.error("Error validating token:", error)
+      // On network error, continue but user might face issues with API calls
+    }
+    
     currentUser = JSON.parse(userData)
     
     // Verificar si el usuario es cliente
@@ -61,7 +84,7 @@ function checkAuthStatus() {
     loadUserReviews()
   } else {
     // Redirigir a la página principal si no hay sesión
-    window.location.href = "login.html?redirect=user-profile.html"
+    window.location.href = "index.html"
   }
 }
 

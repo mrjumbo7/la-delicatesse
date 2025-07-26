@@ -6,14 +6,70 @@ let chefs = []
 let recipes = []
 
 // Initialize the application
-document.addEventListener("DOMContentLoaded", () => {
-  checkAuthStatus()
+document.addEventListener("DOMContentLoaded", async () => {
+  await checkAuthStatus()
   addMobileLanguageButton()
   loadChefs()
   loadRecipes()
   setupEventListeners()
   initializeAnimations()
+  setupGlobalErrorHandler()
+  setupTokenRefresh()
 })
+
+// Setup automatic token refresh
+function setupTokenRefresh() {
+  // Check token expiration every 5 minutes
+  setInterval(() => {
+    const token = localStorage.getItem("authToken")
+    if (token && currentUser) {
+      try {
+        const tokenData = JSON.parse(atob(token))
+        const currentTime = Math.floor(Date.now() / 1000)
+        const timeUntilExpiry = tokenData.exp - currentTime
+        
+        // If token expires in less than 1 hour, show warning
+        if (timeUntilExpiry < 3600 && timeUntilExpiry > 0) {
+          showToast('Tu sesión expirará pronto. Guarda tu trabajo.', 'warning')
+        }
+        
+        // If token is expired, clear session
+        if (timeUntilExpiry <= 0) {
+          console.warn('Token expirado, cerrando sesión...')
+          clearSession()
+          showToast('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'error')
+        }
+      } catch (error) {
+        console.error('Error checking token expiration:', error)
+      }
+    }
+  }, 5 * 60 * 1000) // Check every 5 minutes
+}
+
+// Setup global error handler for authentication
+function setupGlobalErrorHandler() {
+  // Override fetch to handle 401 errors globally
+  const originalFetch = window.fetch
+  window.fetch = async function(...args) {
+    try {
+      const response = await originalFetch.apply(this, args)
+      
+      // Check if response is 401 (Unauthorized)
+      if (response.status === 401) {
+        const result = await response.json()
+        if (result.message && result.message.includes('Token') || result.message.includes('autorizado')) {
+          console.warn('Token expirado o inválido, cerrando sesión...')
+          clearSession()
+          showToast('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning')
+        }
+      }
+      
+      return response
+    } catch (error) {
+      throw error
+    }
+  }
+}
 
 // Add mobile language button for non-logged users
 function addMobileLanguageButton() {
@@ -21,13 +77,54 @@ function addMobileLanguageButton() {
 }
 
 // Check if user is authenticated
-function checkAuthStatus() {
+async function checkAuthStatus() {
   const token = localStorage.getItem("authToken")
   const userData = localStorage.getItem("userData")
 
   if (token && userData) {
-    currentUser = JSON.parse(userData)
-    updateUIForLoggedInUser()
+    try {
+      // Validate token with server
+      const response = await fetch("api/auth/validate.php", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        currentUser = JSON.parse(userData)
+        updateUIForLoggedInUser()
+      } else {
+        // Token is invalid, clear session
+        clearSession()
+      }
+    } catch (error) {
+      console.error("Error validating token:", error)
+      // On network error, still show user as logged in but with limited functionality
+      currentUser = JSON.parse(userData)
+      updateUIForLoggedInUser()
+    }
+  }
+}
+
+// Clear user session
+function clearSession() {
+  localStorage.removeItem("authToken")
+  localStorage.removeItem("userData")
+  currentUser = null
+  // Update UI to show login buttons
+  const authButtons = document.getElementById("authButtons")
+  if (authButtons) {
+    authButtons.innerHTML = `
+      <button onclick="openModal('loginModal')" class="btn btn-primary" data-translate="iniciar_sesion">
+        Iniciar Sesión
+      </button>
+      <button onclick="openModal('registerModal')" class="btn btn-outline" data-translate="registrarse">
+        Registrarse
+      </button>
+    `
   }
 }
 
@@ -251,6 +348,22 @@ async function handleLogin(event) {
     const result = await response.json()
 
     if (result.success) {
+      // Validate token format before storing
+      try {
+        const tokenData = JSON.parse(atob(result.token))
+        if (!tokenData.user_id || !tokenData.exp) {
+          throw new Error('Token inválido')
+        }
+        
+        // Check if token is already expired
+        if (tokenData.exp < Math.floor(Date.now() / 1000)) {
+          throw new Error('Token expirado')
+        }
+      } catch (error) {
+        showToast("Error en el token de autenticación", "error")
+        return
+      }
+      
       localStorage.setItem("authToken", result.token)
       localStorage.setItem("userData", JSON.stringify(result.user))
       currentUser = result.user
@@ -310,11 +423,13 @@ async function handleRegister(event) {
 }
 
 function logout() {
-  localStorage.removeItem("authToken")
-  localStorage.removeItem("userData")
-  currentUser = null
+  clearSession()
   showToast("Sesión cerrada exitosamente", "info")
-  window.location.href = "index.html"
+  
+  // Only redirect if not already on index page
+  if (window.location.pathname !== '/index.html' && !window.location.pathname.endsWith('/')) {
+    window.location.href = "index.html"
+  }
 }
 
 // Load chefs data
@@ -540,8 +655,112 @@ function contactChef(chefId) {
 
 // Recipe functions
 function viewRecipe(recipeId) {
-  localStorage.setItem("selectedRecipeId", recipeId)
-  window.location.href = "recipe-detail.html"
+  // Check if user is authenticated
+  if (!currentUser) {
+    showToast("Debes iniciar sesión para ver los detalles de las recetas", "warning")
+    openModal("loginModal")
+    return
+  }
+  
+  // Load recipe data and show modal
+  loadRecipeModal(recipeId)
+}
+
+// Load recipe data for modal
+async function loadRecipeModal(recipeId) {
+  try {
+    showLoading()
+    
+    const response = await fetch(`api/recipes/list.php?id=${recipeId}`)
+    const result = await response.json()
+    
+    if (result.success && result.data.length > 0) {
+      const recipe = result.data[0]
+      populateRecipeModal(recipe)
+      openModal("recipeModal")
+    } else {
+      showToast("No se pudo cargar la información de la receta", "error")
+    }
+  } catch (error) {
+    console.error("Error loading recipe:", error)
+    showToast("Error al cargar los datos de la receta", "error")
+  } finally {
+    hideLoading()
+  }
+}
+
+// Populate recipe modal with data
+function populateRecipeModal(recipe) {
+  document.getElementById("modalRecipeTitle").textContent = recipe.titulo
+  document.getElementById("modalRecipeChef").textContent = `Por ${recipe.chef_nombre}`
+  document.getElementById("modalRecipeTime").textContent = `${recipe.tiempo_preparacion} min`
+  document.getElementById("modalRecipeDifficulty").textContent = recipe.dificultad
+  document.getElementById("modalRecipePrice").textContent = `$${recipe.precio}`
+  document.getElementById("modalRecipeDescription").textContent = recipe.descripcion || "No hay descripción disponible."
+  
+  // Set image
+  const modalImage = document.getElementById("modalRecipeImage")
+  modalImage.src = recipe.imagen || "/placeholder.svg?height=300&width=400"
+  modalImage.alt = recipe.titulo
+  
+  // Parse and display ingredients
+  const ingredientsList = document.getElementById("modalRecipeIngredients")
+  if (recipe.ingredientes) {
+    const ingredients = recipe.ingredientes.split('\n').filter(ing => ing.trim())
+    if (ingredients.length > 0) {
+      ingredientsList.innerHTML = ingredients
+        .map(ingredient => `<li>${ingredient.trim()}</li>`)
+        .join('')
+    } else {
+      ingredientsList.innerHTML = '<li>No hay ingredientes disponibles</li>'
+    }
+  } else {
+    ingredientsList.innerHTML = '<li>No hay ingredientes disponibles</li>'
+  }
+  
+  // Parse and display instructions
+  const instructionsList = document.getElementById("modalRecipeInstructions")
+  if (recipe.instrucciones) {
+    const instructions = recipe.instrucciones.split('\n').filter(inst => inst.trim())
+    if (instructions.length > 0) {
+      instructionsList.innerHTML = instructions
+        .map((instruction, index) => `<li>${instruction.trim()}</li>`)
+        .join('')
+    } else {
+      instructionsList.innerHTML = '<li>No hay instrucciones disponibles</li>'
+    }
+  } else {
+    instructionsList.innerHTML = '<li>No hay instrucciones disponibles</li>'
+  }
+  
+  // Setup modal buttons
+  const buyBtn = document.getElementById("modalBuyRecipeBtn")
+  const favBtn = document.getElementById("modalAddToFavoritesBtn")
+  
+  buyBtn.onclick = () => buyRecipe(recipe.id)
+  favBtn.onclick = () => toggleFavoriteRecipe(recipe.id)
+}
+
+// Buy recipe function
+function buyRecipe(recipeId) {
+  if (!currentUser) {
+    showToast("Debes iniciar sesión para comprar recetas", "warning")
+    return
+  }
+  
+  // Implement buy recipe logic here
+  showToast("Funcionalidad de compra en desarrollo", "info")
+}
+
+// Toggle favorite recipe function
+function toggleFavoriteRecipe(recipeId) {
+  if (!currentUser) {
+    showToast("Debes iniciar sesión para agregar favoritos", "warning")
+    return
+  }
+  
+  // Implement favorite toggle logic here
+  showToast("Funcionalidad de favoritos en desarrollo", "info")
 }
 
 // Utility functions
