@@ -31,28 +31,25 @@
                             <li><a href="#inicio" data-translate="inicio">Inicio</a></li>
                             <li><a href="#chefs" data-translate="chefs">Chefs</a></li>
                             <li><a href="#recetas" data-translate="recetas">Recetas</a></li>
-                            <li><a href="#contacto" data-translate="contacto">Contacto</a></li>
+                            <li>
+                            <button id="languageToggle" onclick="changeLanguage(window.currentLanguage === 'en' ? 'es' : 'en')" class="btn btn-outline-sm" data-translate="languageToggle">ES</button>
+                            </li>
                         </ul>
                     </nav>
                     
-                    <!-- Desktop Auth Buttons and Language Toggle -->
-                    <div class="flex items-center gap-4">
-                        <button id="languageToggle" onclick="changeLanguage(window.currentLanguage === 'en' ? 'es' : 'en')" class="btn btn-outline-sm" data-translate="languageToggle">
-                            ES
+                    <!-- Desktop Auth Buttons -->
+                    <div class="auth-buttons">
+                        <button onclick="openModal('loginModal')" class="btn btn-primary" data-translate="iniciar_sesion">
+                            Iniciar Sesión
                         </button>
-                        <div id="authButtons" class="auth-buttons">
-                            <button onclick="openModal('loginModal')" class="btn btn-primary" data-translate="iniciar_sesion">
-                                Iniciar Sesión
-                            </button>
-                            <button onclick="openModal('registerModal')" class="btn btn-outline" data-translate="registrarse">
-                                Registrarse
-                            </button>
-                        </div>
+                        <button onclick="openModal('registerModal')" class="btn btn-outline" data-translate="registrarse">
+                            Registrarse
+                        </button>
                     </div>
                 </div>
                 
                 <!-- Mobile menu button -->
-                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <button class="mobile-menu-toggle">
                     <span id="menuIcon">☰</span>
                     <span id="closeIcon" style="display: none;">✕</span>
                 </button>
@@ -154,6 +151,72 @@
         </div>
     </section>
 
+    <!-- Proceso de Reserva Section -->
+    <section class="py-20">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Proceso Simple</div>
+                <h2>¿Cómo funciona nuestro servicio?</h2>
+                <p>Reservar un chef a domicilio nunca fue tan fácil. Sigue estos simples pasos para disfrutar de una experiencia gastronómica única.</p>
+                <div class="header-decoration">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="text-center p-6 rounded-lg hover:shadow-lg transition card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg);">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style="background-color: rgba(139, 90, 43, 0.1);">
+                        <div class="step-number" style="background-color: var(--primary-color); color: var(--light-text); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">1</div>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Explora Chefs</h4>
+                    <p style="color: var(--text-light);">Navega por nuestro catálogo de chefs certificados y encuentra el que mejor se adapte a tus gustos y presupuesto.</p>
+                </div>
+                
+                <div class="text-center p-6 rounded-lg hover:shadow-lg transition card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg);">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style="background-color: rgba(139, 90, 43, 0.1);">
+                        <div class="step-number" style="background-color: var(--primary-color); color: var(--light-text); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">2</div>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Selecciona Fecha</h4>
+                    <p style="color: var(--text-light);">Elige la fecha y hora que mejor te convenga. Nuestros chefs tienen horarios flexibles para adaptarse a tu agenda.</p>
+                </div>
+                
+                <div class="text-center p-6 rounded-lg hover:shadow-lg transition card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg);">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style="background-color: rgba(139, 90, 43, 0.1);">
+                        <div class="step-number" style="background-color: var(--primary-color); color: var(--light-text); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">3</div>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Personaliza Menú</h4>
+                    <p style="color: var(--text-light);">Trabaja directamente con tu chef para crear un menú personalizado que se adapte a tus preferencias y restricciones alimentarias.</p>
+                </div>
+                
+                <div class="text-center p-6 rounded-lg hover:shadow-lg transition card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg);">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style="background-color: rgba(139, 90, 43, 0.1);">
+                        <div class="step-number" style="background-color: var(--primary-color); color: var(--light-text); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">4</div>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-4" style="color: var(--primary-color); font-family: var(--font-heading);">Disfruta la Experiencia</h4>
+                    <p style="color: var(--text-light);">Relájate mientras tu chef prepara una experiencia gastronómica única en la comodidad de tu hogar.</p>
+                </div>
+            </div>
+            
+            <div class="text-center mt-12">
+                <div class="inline-flex items-center gap-4 p-6 rounded-lg" style="background-color: var(--secondary-color); border-radius: var(--border-radius-lg);">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6" style="color: var(--accent-color);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span style="color: var(--text-color); font-weight: 500;">Tiempo promedio de reserva: 24-48 horas</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6" style="color: var(--accent-color);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span style="color: var(--text-color); font-weight: 500;">Cancelación gratuita hasta 12 horas antes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Chefs Section -->
     <section id="chefs" class="featured-chefs">
         <div class="container">
@@ -245,37 +308,71 @@
         </div>
     </section>
 
-    <!-- Contact Section -->
-    <section id="contacto" class="py-20" style="background-color: var(--light-bg);">
+    <!-- Testimonials Section -->
+    <section class="py-20" style="background-color: var(--light-bg);">
         <div class="container">
             <div class="section-header">
-                <div class="section-badge">Contáctanos</div>
-                <h2>¿Tienes alguna pregunta?</h2>
-                <p>Estamos aquí para ayudarte a crear la experiencia gastronómica perfecta.</p>
+                <div class="section-badge">Testimonios</div>
+                <h2>Lo que dicen nuestros clientes</h2>
+                <p>Experiencias reales de quienes han disfrutado nuestros servicios gastronómicos.</p>
                 <div class="header-decoration">
                     <span></span>
                     <span></span>
                     <span></span>
                 </div>
             </div>
-            <div class="max-w-2xl mx-auto">
-                <form class="space-y-6">
-                    <div class="form-group">
-                        <label>Nombre</label>
-                        <input type="text" required>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <div class="testimonial-stars">
+                            ★★★★★
+                        </div>
+                        <p>"Una experiencia increíble. El chef preparó una cena espectacular en casa. Definitivamente volveremos a contratar el servicio."</p>
                     </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" required>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <span>M</span>
+                        </div>
+                        <div>
+                            <div class="author-name">María González</div>
+                            <div class="author-title">Cliente</div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Mensaje</label>
-                        <textarea rows="4" required></textarea>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <div class="testimonial-stars">
+                            ★★★★★
+                        </div>
+                        <p>"Profesionalismo y calidad excepcional. El chef no solo cocinó delicioso, sino que también nos enseñó técnicas culinarias."</p>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">
-                        Enviar Mensaje
-                    </button>
-                </form>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <span>C</span>
+                        </div>
+                        <div>
+                            <div class="author-name">Carlos Mendoza</div>
+                            <div class="author-title">Cliente</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <div class="testimonial-stars">
+                            ★★★★★
+                        </div>
+                        <p>"La plataforma me ha permitido conectar con clientes increíbles y compartir mi pasión por la cocina. Excelente experiencia."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <span>A</span>
+                        </div>
+                        <div>
+                            <div class="author-name">Ana Rodríguez</div>
+                            <div class="author-title">Chef</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -311,7 +408,7 @@
                         <li><a href="#inicio">Inicio</a></li>
                         <li><a href="#chefs">Chefs</a></li>
                         <li><a href="#recetas">Recetas</a></li>
-                        <li><a href="#contacto">Contacto</a></li>
+                        <li><a href="chefs-catalog.html">Catálogo de Chefs</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">

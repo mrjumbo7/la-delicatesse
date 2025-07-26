@@ -8,11 +8,17 @@ let recipes = []
 // Initialize the application
 document.addEventListener("DOMContentLoaded", () => {
   checkAuthStatus()
+  addMobileLanguageButton()
   loadChefs()
   loadRecipes()
   setupEventListeners()
   initializeAnimations()
 })
+
+// Add mobile language button for non-logged users
+function addMobileLanguageButton() {
+  // Función deshabilitada - botón de idioma móvil removido
+}
 
 // Check if user is authenticated
 function checkAuthStatus() {
@@ -52,18 +58,32 @@ function updateUIForLoggedInUser() {
             </svg>
           </button>
           <div class="user-menu-dropdown">
-            <a href="user-profile.html">Mi Perfil</a>
-            ${currentUser.tipo_usuario === 'chef' ? '<a href="dashboard.html">Dashboard</a>' : ''}
+            ${currentUser.tipo_usuario === 'chef' ? 
+              '<a href="dashboard.html">Mi Dashboard</a>' : 
+              '<a href="user-profile.html">Mi Perfil</a>'
+            }
             <a href="#" onclick="logout()">Cerrar Sesión</a>
           </div>
         </div>
       </div>
     `;
+  } else if (authButtons) {
+    // Botón de idioma móvil removido para usuarios no logueados
   }
 }
 
 // Setup event listeners
 function setupEventListeners() {
+  // Mobile menu toggle button
+  const mobileMenuToggle = document.querySelector('.mobile-menu-toggle')
+  if (mobileMenuToggle) {
+    mobileMenuToggle.addEventListener('click', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      toggleMobileMenu()
+    })
+  }
+
   // Search functionality for chefs
   const searchInput = document.getElementById("searchChefs")
   if (searchInput) {
@@ -87,6 +107,30 @@ function setupEventListeners() {
   if (filterDifficulty) {
     filterDifficulty.addEventListener("change", filterRecipes)
   }
+
+  // Close mobile menu when navigation links are clicked
+  const navLinks = document.querySelectorAll('.nav-container nav a')
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const navContainer = document.querySelector('.nav-container')
+      if (navContainer && navContainer.classList.contains('active')) {
+        toggleMobileMenu()
+      }
+    })
+  })
+
+  // Close mobile menu when auth buttons are clicked in mobile
+  const authButtons = document.querySelectorAll('.nav-container .auth-buttons button')
+  authButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const navContainer = document.querySelector('.nav-container')
+      if (navContainer && navContainer.classList.contains('active')) {
+        toggleMobileMenu()
+      }
+    })
+  })
 }
 
 // Initialize animations
@@ -118,11 +162,13 @@ function toggleMobileMenu() {
   const overlay = document.getElementById("mobileMenuOverlay")
   const menuIcon = document.getElementById("menuIcon")
   const closeIcon = document.getElementById("closeIcon")
+  const toggleButton = document.querySelector(".mobile-menu-toggle")
 
   if (navContainer.classList.contains("active")) {
     // Close menu
     navContainer.classList.remove("active")
     overlay.classList.remove("active")
+    toggleButton.classList.remove("active")
     menuIcon.style.display = "inline"
     closeIcon.style.display = "none"
     document.body.style.overflow = "auto"
@@ -130,16 +176,25 @@ function toggleMobileMenu() {
     // Open menu
     navContainer.classList.add("active")
     overlay.classList.add("active")
+    toggleButton.classList.add("active")
     menuIcon.style.display = "none"
     closeIcon.style.display = "inline"
     document.body.style.overflow = "hidden"
   }
 }
 
-// Close mobile menu when overlay is clicked
+// Close mobile menu when overlay is clicked or when clicking outside the menu
 document.addEventListener("click", (e) => {
-  if (e.target.id === "mobileMenuOverlay") {
-    toggleMobileMenu()
+  const overlay = document.getElementById("mobileMenuOverlay")
+  const navContainer = document.querySelector(".nav-container")
+  const mobileMenuToggle = document.querySelector(".mobile-menu-toggle")
+  
+  // Only close if clicking on overlay or outside the menu (but not on the toggle button)
+  if (overlay && overlay.classList.contains("active")) {
+    if (e.target.id === "mobileMenuOverlay" || 
+        (!navContainer.contains(e.target) && !mobileMenuToggle.contains(e.target))) {
+      toggleMobileMenu()
+    }
   }
 })
 
