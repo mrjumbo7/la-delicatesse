@@ -280,6 +280,24 @@ function toggleMobileMenu() {
   }
 }
 
+// Mobile menu toggle function for recipe-detail page
+function toggleRecipeDetailMobileMenu() {
+  const mobileMenu = document.getElementById("mobileMenu")
+  const toggleButton = document.querySelector(".mobile-menu-btn")
+
+  if (mobileMenu.classList.contains("active")) {
+    // Close menu
+    mobileMenu.classList.remove("active")
+    toggleButton.classList.remove("active")
+    document.body.style.overflow = "auto"
+  } else {
+    // Open menu
+    mobileMenu.classList.add("active")
+    toggleButton.classList.add("active")
+    document.body.style.overflow = "hidden"
+  }
+}
+
 // Close mobile menu when overlay is clicked or when clicking outside the menu
 document.addEventListener("click", (e) => {
   const overlay = document.getElementById("mobileMenuOverlay")
@@ -291,6 +309,18 @@ document.addEventListener("click", (e) => {
     if (e.target.id === "mobileMenuOverlay" || 
         (!navContainer.contains(e.target) && !mobileMenuToggle.contains(e.target))) {
       toggleMobileMenu()
+    }
+  }
+  
+  // Handle recipe-detail mobile menu
+  const recipeDetailMobileMenu = document.getElementById("mobileMenu")
+  const recipeDetailToggle = document.querySelector(".mobile-menu-btn")
+  
+  if (recipeDetailMobileMenu && recipeDetailMobileMenu.classList.contains("active")) {
+    if (e.target === recipeDetailMobileMenu || 
+        (!recipeDetailMobileMenu.querySelector(".mobile-menu-content").contains(e.target) && 
+         !recipeDetailToggle.contains(e.target))) {
+      toggleRecipeDetailMobileMenu()
     }
   }
 })
@@ -736,9 +766,11 @@ function populateRecipeModal(recipe) {
   // Setup modal buttons
   const buyBtn = document.getElementById("modalBuyRecipeBtn")
   const favBtn = document.getElementById("modalAddToFavoritesBtn")
+  const detailBtn = document.getElementById("modalViewDetailBtn")
   
   buyBtn.onclick = () => buyRecipe(recipe.id)
   favBtn.onclick = () => toggleFavoriteRecipe(recipe.id)
+  detailBtn.onclick = () => viewRecipeDetail(recipe.id)
 }
 
 // Buy recipe function
@@ -759,8 +791,52 @@ function toggleFavoriteRecipe(recipeId) {
     return
   }
   
-  // Implement favorite toggle logic here
-  showToast("Funcionalidad de favoritos en desarrollo", "info")
+  if (currentUser.tipo_usuario !== 'cliente') {
+    showToast("Solo los clientes pueden añadir recetas a favoritos", "warning")
+    return
+  }
+  
+  addToFavoritesAPI('recipe', recipeId)
+}
+
+// Navigate to recipe detail page
+function viewRecipeDetail(recipeId) {
+  if (!currentUser) {
+    showToast("Debes iniciar sesión para ver los detalles de las recetas", "warning")
+    return
+  }
+  
+  // Store recipe ID for the detail page
+  localStorage.setItem("selectedRecipeId", recipeId)
+  
+  // Close modal and navigate to detail page
+  closeModal("recipeModal")
+  window.location.href = `recipe-detail.html?id=${recipeId}`
+}
+
+// Generic function to add to favorites via API
+async function addToFavoritesAPI(type, id) {
+  try {
+    const response = await fetch('api/client/add-favorite.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: JSON.stringify({ type, id })
+    })
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      showToast(result.message || `${type === 'chef' ? 'Chef' : 'Receta'} añadido a favoritos`, 'success')
+    } else {
+      showToast(result.message || 'Error al añadir a favoritos', 'error')
+    }
+  } catch (error) {
+    console.error('Error adding to favorites:', error)
+    showToast('Error de conexión', 'error')
+  }
 }
 
 // Utility functions

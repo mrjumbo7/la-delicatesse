@@ -5,7 +5,7 @@ header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 require_once '../../config/database.php';
-require_once '../auth/auth.php';
+require_once '../../utils/auth.php';
 
 try {
     $user = requireAuth();
@@ -20,14 +20,19 @@ try {
         $servicesQuery = "SELECT s.fecha_solicitud as fecha, u.nombre as cliente_nombre, s.estado
                          FROM servicios s
                          INNER JOIN usuarios u ON s.cliente_id = u.id
-                         WHERE s.chef_id = :user_id
+                         WHERE s.chef_id = ?
                          ORDER BY s.fecha_solicitud DESC
                          LIMIT 5";
         
         $servicesStmt = $db->prepare($servicesQuery);
-        $servicesStmt->bindParam(':user_id', $user['user_id']);
+        $servicesStmt->bind_param('i', $user['id']);
         $servicesStmt->execute();
-        $services = $servicesStmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $servicesStmt->get_result();
+        $services = [];
+        while ($row = $result->fetch_assoc()) {
+            $services[] = $row;
+        }
+        $servicesStmt->close();
         
         foreach ($services as $service) {
             $activities[] = [
@@ -41,14 +46,19 @@ try {
         $reviewsQuery = "SELECT c.fecha_calificacion as fecha, c.puntuacion, u.nombre as cliente_nombre
                         FROM calificaciones c
                         INNER JOIN usuarios u ON c.cliente_id = u.id
-                        WHERE c.chef_id = :user_id
+                        WHERE c.chef_id = ?
                         ORDER BY c.fecha_calificacion DESC
                         LIMIT 3";
         
         $reviewsStmt = $db->prepare($reviewsQuery);
-        $reviewsStmt->bindParam(':user_id', $user['user_id']);
+        $reviewsStmt->bind_param('i', $user['id']);
         $reviewsStmt->execute();
-        $reviews = $reviewsStmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $reviewsStmt->get_result();
+        $reviews = [];
+        while ($row = $result->fetch_assoc()) {
+            $reviews[] = $row;
+        }
+        $reviewsStmt->close();
         
         foreach ($reviews as $review) {
             $stars = str_repeat('⭐', $review['puntuacion']);
@@ -64,14 +74,19 @@ try {
         $servicesQuery = "SELECT s.fecha_solicitud as fecha, u.nombre as chef_nombre, s.estado
                          FROM servicios s
                          INNER JOIN usuarios u ON s.chef_id = u.id
-                         WHERE s.cliente_id = :user_id
+                         WHERE s.cliente_id = ?
                          ORDER BY s.fecha_solicitud DESC
                          LIMIT 5";
         
         $servicesStmt = $db->prepare($servicesQuery);
-        $servicesStmt->bindParam(':user_id', $user['user_id']);
+        $servicesStmt->bind_param('i', $user['id']);
         $servicesStmt->execute();
-        $services = $servicesStmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $servicesStmt->get_result();
+        $services = [];
+        while ($row = $result->fetch_assoc()) {
+            $services[] = $row;
+        }
+        $servicesStmt->close();
         
         foreach ($services as $service) {
             $activities[] = [
@@ -98,5 +113,9 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

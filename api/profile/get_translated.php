@@ -26,16 +26,17 @@ try {
               COALESCE(t.especialidad, pc.especialidad) as especialidad_traducida
               FROM usuarios u
               INNER JOIN perfiles_chef pc ON u.id = pc.usuario_id
-              LEFT JOIN traducciones_perfil_chef t ON pc.id = t.perfil_chef_id AND t.idioma = :lang
-              WHERE u.id = :chef_id AND u.tipo_usuario = 'chef'";
+              LEFT JOIN traducciones_perfil_chef t ON pc.id = t.perfil_chef_id AND t.idioma = ?
+              WHERE u.id = ? AND u.tipo_usuario = 'chef'";
     
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':chef_id', $chef_id);
-    $stmt->bindParam(':lang', $language);
+    $stmt->bind_param('si', $language, $chef_id);
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    if ($stmt->rowCount() > 0) {
-        $chef_profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($result->num_rows > 0) {
+        $chef_profile = $result->fetch_assoc();
+        $stmt->close();
         
         // Estructurar la respuesta
         $response = [
@@ -66,4 +67,8 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }

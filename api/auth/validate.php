@@ -26,12 +26,16 @@ try {
     $database = new Database();
     $db = $database->getConnection();
     
-    $query = "SELECT id, nombre, email, tipo_usuario, activo FROM usuarios WHERE id = :user_id AND activo = 1";
+    $query = "SELECT id, nombre, email, tipo_usuario, activo FROM usuarios WHERE id = ? AND activo = 1";
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':user_id', $user['user_id']);
+    $stmt->bind_param('i', $user['user_id']);
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
+    $dbUser = $result->fetch_assoc();
+    
+    $stmt->close();
+    $db->close();
     
     if (!$dbUser) {
         http_response_code(401);

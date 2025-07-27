@@ -39,7 +39,7 @@ try {
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
         
         if (in_array($fileExtension, $allowedExtensions)) {
-            $fileName = 'profile_' . $user['user_id'] . '_' . time() . '.' . $fileExtension;
+            $fileName = 'profile_' . $user['id'] . '_' . time() . '.' . $fileExtension;
             $uploadPath = $uploadDir . $fileName;
             
             if (move_uploaded_file($_FILES['foto_perfil']['tmp_name'], $uploadPath)) {
@@ -49,72 +49,59 @@ try {
     }
     
     // Start transaction
-    $db->beginTransaction();
+    $db->autocommit(false);
     
     try {
         // Update user basic info
-        $userQuery = "UPDATE usuarios SET nombre = :nombre, email = :email, telefono = :telefono WHERE id = :user_id";
+        $userQuery = "UPDATE usuarios SET nombre = ?, email = ?, telefono = ? WHERE id = ?";
         $userStmt = $db->prepare($userQuery);
-        $userStmt->bindParam(':nombre', $nombre);
-        $userStmt->bindParam(':email', $email);
-        $userStmt->bindParam(':telefono', $telefono);
-        $userStmt->bindParam(':user_id', $user['user_id']);
+        $userStmt->bind_param('sssi', $nombre, $email, $telefono, $user['id']);
         $userStmt->execute();
+        $userStmt->close();
         
         // Update or insert chef profile
-        $checkProfileQuery = "SELECT id FROM perfiles_chef WHERE usuario_id = :user_id";
+        $checkProfileQuery = "SELECT id FROM perfiles_chef WHERE usuario_id = ?";
         $checkStmt = $db->prepare($checkProfileQuery);
-        $checkStmt->bindParam(':user_id', $user['user_id']);
+        $checkStmt->bind_param('i', $user['id']);
         $checkStmt->execute();
+        $result = $checkStmt->get_result();
         
-        if ($checkStmt->rowCount() > 0) {
+        if ($result->num_rows > 0) {
+            $checkStmt->close();
             // Update existing profile
-            $profileQuery = "UPDATE perfiles_chef SET 
-                           especialidad = :especialidad,
-                           experiencia_anos = :experiencia_anos,
-                           precio_por_hora = :precio_por_hora,
-                           biografia = :biografia,
-                           ubicacion = :ubicacion,
-                           certificaciones = :certificaciones";
-            
             if ($foto_perfil) {
-                $profileQuery .= ", foto_perfil = :foto_perfil";
-            }
-            
-            $profileQuery .= " WHERE usuario_id = :user_id";
-            
-            $profileStmt = $db->prepare($profileQuery);
-            $profileStmt->bindParam(':especialidad', $especialidad);
-            $profileStmt->bindParam(':experiencia_anos', $experiencia_anos);
-            $profileStmt->bindParam(':precio_por_hora', $precio_por_hora);
-            $profileStmt->bindParam(':biografia', $biografia);
-            $profileStmt->bindParam(':ubicacion', $ubicacion);
-            $profileStmt->bindParam(':certificaciones', $certificaciones);
-            $profileStmt->bindParam(':user_id', $user['user_id']);
-            
-            if ($foto_perfil) {
-                $profileStmt->bindParam(':foto_perfil', $foto_perfil);
+                $profileQuery = "UPDATE perfiles_chef SET 
+                               especialidad = ?, experiencia_anos = ?, precio_por_hora = ?,
+                               biografia = ?, ubicacion = ?, certificaciones = ?, foto_perfil = ?
+                               WHERE usuario_id = ?";
+                $profileStmt = $db->prepare($profileQuery);
+                $profileStmt->bind_param('sidssssi', $especialidad, $experiencia_anos, $precio_por_hora, 
+                                       $biografia, $ubicacion, $certificaciones, $foto_perfil, $user['id']);
+            } else {
+                $profileQuery = "UPDATE perfiles_chef SET 
+                               especialidad = ?, experiencia_anos = ?, precio_por_hora = ?,
+                               biografia = ?, ubicacion = ?, certificaciones = ?
+                               WHERE usuario_id = ?";
+                $profileStmt = $db->prepare($profileQuery);
+                $profileStmt->bind_param('sidsssi', $especialidad, $experiencia_anos, $precio_por_hora, 
+                                       $biografia, $ubicacion, $certificaciones, $user['id']);
             }
             
             $profileStmt->execute();
+            $profileStmt->close();
         } else {
+            $checkStmt->close();
             // Insert new profile
             $profileQuery = "INSERT INTO perfiles_chef 
                            (usuario_id, especialidad, experiencia_anos, precio_por_hora, 
                             biografia, ubicacion, certificaciones, foto_perfil) 
-                           VALUES (:user_id, :especialidad, :experiencia_anos, :precio_por_hora, 
-                                  :biografia, :ubicacion, :certificaciones, :foto_perfil)";
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             
             $profileStmt = $db->prepare($profileQuery);
-            $profileStmt->bindParam(':user_id', $user['user_id']);
-            $profileStmt->bindParam(':especialidad', $especialidad);
-            $profileStmt->bindParam(':experiencia_anos', $experiencia_anos);
-            $profileStmt->bindParam(':precio_por_hora', $precio_por_hora);
-            $profileStmt->bindParam(':biografia', $biografia);
-            $profileStmt->bindParam(':ubicacion', $ubicacion);
-            $profileStmt->bindParam(':certificaciones', $certificaciones);
-            $profileStmt->bindParam(':foto_perfil', $foto_perfil);
+            $profileStmt->bind_param('isidssss', $user['id'], $especialidad, $experiencia_anos, $precio_por_hora, 
+                                   $biografia, $ubicacion, $certificaciones, $foto_perfil);
             $profileStmt->execute();
+            $profileStmt->close();
         }
         
         // Traducir contenido al inglés
@@ -133,24 +120,23 @@ try {
             // Guardar traducciones
             $translationQuery = "INSERT INTO traducciones_perfil_chef 
                                (perfil_chef_id, idioma, titulo, descripcion, especialidad) 
-                               VALUES (:perfil_id, 'en', :titulo, :descripcion, :especialidad)
+                               VALUES (?, 'en', ?, ?, ?)
                                ON DUPLICATE KEY UPDATE 
-                               titulo = :titulo,
-                               descripcion = :descripcion,
-                               especialidad = :especialidad";
+                               titulo = VALUES(titulo),
+                               descripcion = VALUES(descripcion),
+                               especialidad = VALUES(especialidad)";
             
             $translationStmt = $db->prepare($translationQuery);
-            $translationStmt->bindParam(':perfil_id', $user['user_id']);
-            $translationStmt->bindParam(':titulo', $nombre);
-            $translationStmt->bindParam(':descripcion', $translations['biografia']);
-            $translationStmt->bindParam(':especialidad', $translations['especialidad']);
+            $translationStmt->bind_param('isss', $user['id'], $nombre, $translations['biografia'], $translations['especialidad']);
             $translationStmt->execute();
+            $translationStmt->close();
         } catch (Exception $e) {
             error_log('Error en la traducción: ' . $e->getMessage());
             // Continuar con la actualización aunque falle la traducción
         }
         
         $db->commit();
+        $db->autocommit(true);
         
         // Return updated user data
         $updatedUser = [
@@ -169,11 +155,16 @@ try {
         
     } catch (Exception $e) {
         $db->rollback();
+        $db->autocommit(true);
         throw $e;
     }
     
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

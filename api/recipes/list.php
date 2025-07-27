@@ -22,9 +22,9 @@ try {
               WHERE r.activa = 1";
     
     if ($recipe_id) {
-        $query .= " AND r.id = :recipe_id";
+        $query .= " AND r.id = ?";
     } elseif ($chef_id) {
-        $query .= " AND r.chef_id = :chef_id";
+        $query .= " AND r.chef_id = ?";
     }
     
     $query .= " GROUP BY r.id, u.nombre ORDER BY r.fecha_publicacion DESC";
@@ -32,14 +32,21 @@ try {
     $stmt = $db->prepare($query);
     
     if ($recipe_id) {
-        $stmt->bindParam(':recipe_id', $recipe_id, PDO::PARAM_INT);
+        $stmt->bind_param('i', $recipe_id);
     } elseif ($chef_id) {
-        $stmt->bindParam(':chef_id', $chef_id, PDO::PARAM_INT);
+        $stmt->bind_param('i', $chef_id);
     }
     
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $recipes = [];
+    while ($row = $result->fetch_assoc()) {
+        $recipes[] = $row;
+    }
+    
+    $stmt->close();
+    $db->close();
     
     echo json_encode([
         'success' => true,

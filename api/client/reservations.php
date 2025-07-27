@@ -28,14 +28,19 @@ try {
               INNER JOIN usuarios u ON s.chef_id = u.id
               LEFT JOIN perfiles_chef p ON u.id = p.usuario_id
               LEFT JOIN calificaciones c ON s.id = c.servicio_id
-              WHERE s.cliente_id = :user_id
+              WHERE s.cliente_id = ?
               ORDER BY s.fecha_servicio DESC";
     
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':user_id', $user['user_id']);
+    $stmt->bind_param('i', $user['id']);
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $reservations = [];
+    while ($row = $result->fetch_assoc()) {
+        $reservations[] = $row;
+    }
+    $stmt->close();
     
     echo json_encode([
         'success' => true,
@@ -45,5 +50,9 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

@@ -9,10 +9,13 @@ class Database {
     public function getConnection() {
         $this->conn = null;
         try {
-            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
-            $this->conn->exec("set names utf8");
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch(PDOException $exception) {
+            $this->conn = new mysqli($this->host, $this->username, $this->password, $this->db_name);
+            $this->conn->set_charset("utf8");
+            
+            if ($this->conn->connect_error) {
+                throw new Exception("Error de conexión: " . $this->conn->connect_error);
+            }
+        } catch(Exception $exception) {
             echo "Error de conexión: " . $exception->getMessage();
         }
         return $this->conn;

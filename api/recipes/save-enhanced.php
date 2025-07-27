@@ -72,27 +72,21 @@ try {
         }
     }
     
-    $db->beginTransaction();
+    $db->autocommit(false);
     
     try {
         // Insert recipe
         $recipeQuery = "INSERT INTO recetas (chef_id, titulo, descripcion, ingredientes, instrucciones, 
                                            tiempo_preparacion, dificultad, precio) 
-                       VALUES (:chef_id, :titulo, :descripcion, :ingredientes, :instrucciones, 
-                              :tiempo_preparacion, :dificultad, :precio)";
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         $recipeStmt = $db->prepare($recipeQuery);
-        $recipeStmt->bindParam(':chef_id', $user['user_id']);
-        $recipeStmt->bindParam(':titulo', $titulo);
-        $recipeStmt->bindParam(':descripcion', $descripcion);
-        $recipeStmt->bindParam(':ingredientes', $ingredientes_text);
-        $recipeStmt->bindParam(':instrucciones', $instrucciones_text);
-        $recipeStmt->bindParam(':tiempo_preparacion', $tiempo_preparacion);
-        $recipeStmt->bindParam(':dificultad', $dificultad);
-        $recipeStmt->bindParam(':precio', $precio);
+        $recipeStmt->bind_param('issssisd', $user['id'], $titulo, $descripcion, $ingredientes_text, 
+                               $instrucciones_text, $tiempo_preparacion, $dificultad, $precio);
         $recipeStmt->execute();
         
-        $recipeId = $db->lastInsertId();
+        $recipeId = $db->insert_id;
+        $recipeStmt->close();
         
         // Handle final image
         if (isset($_FILES['final_image']) && $_FILES['final_image']['error'] === UPLOAD_ERR_OK) {
@@ -112,11 +106,11 @@ try {
                     $imageUrl = 'uploads/recipes/' . $fileName;
                     
                     // Update recipe with image
-                    $updateQuery = "UPDATE recetas SET imagen = :imagen WHERE id = :recipe_id";
+                    $updateQuery = "UPDATE recetas SET imagen = ? WHERE id = ?";
                     $updateStmt = $db->prepare($updateQuery);
-                    $updateStmt->bindParam(':imagen', $imageUrl);
-                    $updateStmt->bindParam(':recipe_id', $recipeId);
+                    $updateStmt->bind_param('si', $imageUrl, $recipeId);
                     $updateStmt->execute();
+                    $updateStmt->close();
                     
                     // The image URL is already updated in the recetas table above
                 } else {
@@ -155,6 +149,7 @@ try {
         }
         
         $db->commit();
+        $db->autocommit(true);
         
         echo json_encode([
             'success' => true,
@@ -164,11 +159,16 @@ try {
         
     } catch (Exception $e) {
         $db->rollback();
+        $db->autocommit(true);
         throw $e;
     }
     
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

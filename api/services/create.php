@@ -41,12 +41,13 @@ try {
     }
     
     // Obtener precio del chef
-    $priceQuery = "SELECT precio_por_hora FROM perfiles_chef WHERE usuario_id = :chef_id";
+    $priceQuery = "SELECT precio_por_hora FROM perfiles_chef WHERE usuario_id = ?";
     $priceStmt = $db->prepare($priceQuery);
-    $priceStmt->bindParam(':chef_id', $chef_id);
+    $priceStmt->bind_param('i', $chef_id);
     $priceStmt->execute();
-    
-    $chefData = $priceStmt->fetch(PDO::FETCH_ASSOC);
+    $result = $priceStmt->get_result();
+    $chefData = $result->fetch_assoc();
+    $priceStmt->close();
     if (!$chefData) {
         echo json_encode(['success' => false, 'message' => 'Chef no encontrado']);
         exit;
@@ -59,30 +60,24 @@ try {
     $insertQuery = "INSERT INTO servicios (cliente_id, chef_id, fecha_servicio, hora_servicio, 
                                          ubicacion_servicio, numero_comensales, precio_total, 
                                          descripcion_evento, estado) 
-                    VALUES (:cliente_id, :chef_id, :fecha_servicio, :hora_servicio, 
-                           :ubicacion_servicio, :numero_comensales, :precio_total, 
-                           :descripcion_evento, 'pendiente')";
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')";
     
     $insertStmt = $db->prepare($insertQuery);
-    $insertStmt->bindParam(':cliente_id', $user['user_id']);
-    $insertStmt->bindParam(':chef_id', $chef_id);
-    $insertStmt->bindParam(':fecha_servicio', $fecha_servicio);
-    $insertStmt->bindParam(':hora_servicio', $hora_servicio);
-    $insertStmt->bindParam(':ubicacion_servicio', $ubicacion_servicio);
-    $insertStmt->bindParam(':numero_comensales', $numero_comensales);
-    $insertStmt->bindParam(':precio_total', $precio_total);
-    $insertStmt->bindParam(':descripcion_evento', $descripcion_evento);
+    $insertStmt->bind_param('iisssiis', $user['id'], $chef_id, $fecha_servicio, $hora_servicio, 
+                           $ubicacion_servicio, $numero_comensales, $precio_total, $descripcion_evento);
     
     if ($insertStmt->execute()) {
-        $serviceId = $db->lastInsertId();
+        $serviceId = $db->insert_id;
+        $insertStmt->close();
         
         // Crear notificación para el chef
         $notifQuery = "INSERT INTO notificaciones (usuario_id, titulo, mensaje, tipo) 
-                       VALUES (:chef_id, 'Nueva solicitud de servicio', 
+                       VALUES (?, 'Nueva solicitud de servicio', 
                               'Tienes una nueva solicitud de servicio pendiente', 'servicio')";
         $notifStmt = $db->prepare($notifQuery);
-        $notifStmt->bindParam(':chef_id', $chef_id);
+        $notifStmt->bind_param('i', $chef_id);
         $notifStmt->execute();
+        $notifStmt->close();
         
         echo json_encode([
             'success' => true,
@@ -91,11 +86,16 @@ try {
             'precio_total' => $precio_total
         ]);
     } else {
+        $insertStmt->close();
         echo json_encode(['success' => false, 'message' => 'Error al crear servicio']);
     }
     
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

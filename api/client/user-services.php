@@ -5,7 +5,7 @@ header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 require_once '../../config/database.php';
-require_once '../auth/auth.php';
+require_once '../../utils/auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -28,15 +28,16 @@ try {
     $query = "SELECT s.*, c.nombre as chef_nombre, c.apellido as chef_apellido, c.foto as chef_foto 
               FROM servicios s 
               INNER JOIN usuarios c ON s.chef_id = c.id 
-              WHERE s.cliente_id = :user_id 
+              WHERE s.cliente_id = ? 
               ORDER BY s.fecha_servicio DESC";
     
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':user_id', $user['user_id']);
+    $stmt->bind_param('i', $user['id']);
     $stmt->execute();
+    $result = $stmt->get_result();
     
     $services = [];
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    while ($row = $result->fetch_assoc()) {
         $services[] = [
             'id' => $row['id'],
             'fecha_servicio' => $row['fecha_servicio'],
@@ -53,6 +54,7 @@ try {
             ]
         ];
     }
+    $stmt->close();
     
     echo json_encode([
         'success' => true,
@@ -62,4 +64,8 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }

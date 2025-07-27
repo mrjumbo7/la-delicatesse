@@ -28,33 +28,84 @@ function checkAuthStatus() {
 // Update UI for logged in user
 function updateUIForLoggedInUser() {
     const authButtons = document.getElementById("authButtons");
+    const mobileActions = document.querySelector(".mobile-actions");
 
     if (authButtons && currentUser) {
-        if (currentUser.tipo_usuario === "chef") {
-            // Show dashboard option for chefs
-            authButtons.innerHTML = `
-                <div class="flex items-center space-x-4">
-                    <span class="font-medium" style="color: var(--text-color); font-family: var(--font-body);">Hola, ${currentUser.nombre}</span>
-                    <a href="dashboard.html" class="btn btn-secondary">
-                        Dashboard Chef
-                    </a>
-                    <button onclick="logout()" class="text-red-600 hover:text-red-800 transition font-medium">
-                        Cerrar Sesión
+        const userInitials = currentUser.nombre.split(' ').map(n => n[0]).join('').toUpperCase();
+        const profileImage = currentUser.foto_perfil || null;
+        
+        // Desktop dropdown
+        authButtons.innerHTML = `
+            <div class="user-profile-section">
+                <div class="user-avatar">
+                    ${profileImage ? 
+                        `<img src="${profileImage}" alt="${currentUser.nombre}" />` : 
+                        `<div class="user-avatar-placeholder">${userInitials}</div>`
+                    }
+                </div>
+                <div class="user-menu">
+                    <button class="user-menu-button">
+                        <div class="user-info">
+                            <span class="user-name">${currentUser.nombre.split(' ')[0]}</span>
+                            <span class="user-role">${currentUser.tipo_usuario === 'chef' ? 'Chef' : 'Cliente'}</span>
+                        </div>
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
                     </button>
+                    <div class="user-menu-dropdown">
+                        ${currentUser.tipo_usuario === 'chef' ? 
+                            '<a href="dashboard.html">Mi Dashboard</a>' : 
+                            '<a href="user-profile.html">Mi Perfil</a>'
+                        }
+                        <a href="#" onclick="logout()">Cerrar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Mobile menu
+        if (mobileActions) {
+            mobileActions.innerHTML = `
+                <div class="user-profile-section">
+                    <div class="user-avatar">
+                        ${profileImage ? 
+                            `<img src="${profileImage}" alt="${currentUser.nombre}" />` : 
+                            `<div class="user-avatar-placeholder">${userInitials}</div>`
+                        }
+                    </div>
+                    <div class="user-menu">
+                        <button class="user-menu-button">
+                            <div class="user-info">
+                                <span class="user-name">${currentUser.nombre.split(' ')[0]}</span>
+                                <span class="user-role">${currentUser.tipo_usuario === 'chef' ? 'Chef' : 'Cliente'}</span>
+                            </div>
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="user-menu-dropdown">
+                            ${currentUser.tipo_usuario === 'chef' ? 
+                                '<a href="dashboard.html">Mi Dashboard</a>' : 
+                                '<a href="user-profile.html">Mi Perfil</a>'
+                            }
+                            <a href="#" onclick="logout()">Cerrar Sesión</a>
+                        </div>
+                    </div>
                 </div>
             `;
-        } else {
-            // Show client dashboard for clients
-            authButtons.innerHTML = `
-                <div class="flex items-center space-x-4">
-                    <span class="font-medium" style="color: var(--text-color); font-family: var(--font-body);">Hola, ${currentUser.nombre}</span>
-                    <a href="user-profile.html" class="btn btn-primary">
-                        Mi Dashboard
-                    </a>
-                    <button onclick="logout()" class="text-red-600 hover:text-red-800 transition font-medium">
-                        Cerrar Sesión
-                    </button>
-                </div>
+        }
+    } else if (authButtons) {
+        // Show login/register buttons when not logged in
+        authButtons.innerHTML = `
+            <button class="btn btn-outline" onclick="openModal('loginModal')">Iniciar Sesión</button>
+            <button class="btn btn-primary" onclick="openModal('registerModal')">Registrarse</button>
+        `;
+        
+        if (mobileActions) {
+            mobileActions.innerHTML = `
+                <button class="btn btn-outline btn-block" onclick="openModal('loginModal')">Iniciar Sesión</button>
+                <button class="btn btn-primary btn-block" onclick="openModal('registerModal')">Registrarse</button>
             `;
         }
     }
@@ -63,7 +114,7 @@ function updateUIForLoggedInUser() {
 // Setup event listeners
 function setupEventListeners() {
     // Tab navigation
-    const tabs = document.querySelectorAll('.recipe-detail-tab');
+    const tabs = document.querySelectorAll('.recipe-nav-btn');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const tabId = tab.getAttribute('data-tab');
@@ -148,10 +199,22 @@ function updateRecipeUI() {
     // Update recipe ingredients tab
     const ingredientsList = document.getElementById('recipeIngredients');
     if (recipeData.ingredientes) {
-        const ingredients = JSON.parse(recipeData.ingredientes);
-        ingredientsList.innerHTML = ingredients
-            .map(ingredient => `<li>${ingredient}</li>`)
-            .join('');
+        try {
+            // Try to parse as JSON first (for backward compatibility)
+            const ingredients = JSON.parse(recipeData.ingredientes);
+            ingredientsList.innerHTML = ingredients
+                .map(ingredient => `<li>${ingredient}</li>`)
+                .join('');
+        } catch (e) {
+            // If not JSON, treat as plain text with line breaks
+            const ingredients = recipeData.ingredientes
+                .split('\n')
+                .filter(ingredient => ingredient.trim() !== '')
+                .map(ingredient => ingredient.trim());
+            ingredientsList.innerHTML = ingredients
+                .map(ingredient => `<li>${ingredient}</li>`)
+                .join('');
+        }
     } else {
         ingredientsList.innerHTML = '<li>No hay ingredientes disponibles.</li>';
     }
@@ -159,10 +222,22 @@ function updateRecipeUI() {
     // Update recipe instructions tab
     const instructionsList = document.getElementById('recipeInstructions');
     if (recipeData.instrucciones) {
-        const instructions = JSON.parse(recipeData.instrucciones);
-        instructionsList.innerHTML = instructions
-            .map(instruction => `<li>${instruction}</li>`)
-            .join('');
+        try {
+            // Try to parse as JSON first (for backward compatibility)
+            const instructions = JSON.parse(recipeData.instrucciones);
+            instructionsList.innerHTML = instructions
+                .map(instruction => `<li>${instruction}</li>`)
+                .join('');
+        } catch (e) {
+            // If not JSON, treat as plain text with line breaks
+            const instructions = recipeData.instrucciones
+                .split('\n')
+                .filter(instruction => instruction.trim() !== '')
+                .map(instruction => instruction.trim());
+            instructionsList.innerHTML = instructions
+                .map(instruction => `<li>${instruction}</li>`)
+                .join('');
+        }
     } else {
         instructionsList.innerHTML = '<li>No hay instrucciones disponibles.</li>';
     }
@@ -289,10 +364,10 @@ async function toggleFavorite() {
             const response = await fetch("api/client/remove-favorite.php", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
-                body: `type=recipe&id=${recipeData.id}`,
+                body: JSON.stringify({ type: "recipe", id: recipeData.id }),
             });
             
             const result = await response.json();
@@ -308,10 +383,10 @@ async function toggleFavorite() {
             const response = await fetch("api/client/add-favorite.php", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
-                body: `type=recipe&id=${recipeData.id}`,
+                body: JSON.stringify({ type: "recipe", id: recipeData.id }),
             });
             
             const result = await response.json();
@@ -366,18 +441,18 @@ function viewRecipe(recipeId) {
 
 // Tab navigation
 function activateTab(tabId) {
-    // Hide all tab panes
-    document.querySelectorAll('.tab-pane').forEach(pane => {
-        pane.classList.remove('active');
+    // Hide all tab panels
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
     });
     
-    // Deactivate all tabs
-    document.querySelectorAll('.recipe-detail-tab').forEach(tab => {
+    // Deactivate all tab buttons
+    document.querySelectorAll('.recipe-nav-btn').forEach(tab => {
         tab.classList.remove('active');
     });
     
-    // Activate selected tab and pane
-    document.getElementById(`${tabId}Tab`).classList.add('active');
+    // Activate selected tab button and panel
+    document.getElementById(`${tabId}Content`).classList.add('active');
     document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
 }
 

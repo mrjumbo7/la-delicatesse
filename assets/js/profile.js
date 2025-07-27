@@ -133,6 +133,17 @@ function setupEventListeners() {
       showTab(tabId)
     })
   })
+  
+  // Configurar input de nueva preferencia para manejar Enter
+  const newPrefInput = document.getElementById("newPreference")
+  if (newPrefInput) {
+    newPrefInput.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        addPreference()
+      }
+    })
+  }
 }
 
 // Previsualizar imagen de perfil
@@ -213,7 +224,8 @@ async function loadUserPreferences() {
     const result = await response.json()
 
     if (result.success) {
-      userPreferences = result.data
+      // Filtrar solo las preferencias personalizadas para mostrar en la lista
+      userPreferences = result.data.filter(pref => pref.tipo === 'custom')
       displayUserPreferences()
       
       // Marcar checkboxes de tipos de cocina y restricciones
@@ -262,25 +274,129 @@ function displayUserPreferences() {
 }
 
 // Añadir nueva preferencia
-function addPreference() {
+async function addPreference() {
   const newPrefInput = document.getElementById("newPreference")
   const preference = newPrefInput.value.trim()
   
-  if (!preference) return
+  if (!preference) {
+    showToast("Por favor ingresa una preferencia", "warning")
+    return
+  }
   
-  // Simular añadir preferencia (en producción se enviaría al servidor)
-  const tempId = Date.now().toString()
-  userPreferences.push({ id: tempId, preferencia: preference })
-  displayUserPreferences()
+  // Verificar si la preferencia ya existe
+  if (userPreferences.some(pref => pref.preferencia.toLowerCase() === preference.toLowerCase())) {
+    showToast("Esta preferencia ya existe", "warning")
+    return
+  }
   
-  // Limpiar input
-  newPrefInput.value = ""
+  try {
+    showLoading()
+    
+    // Crear FormData con todas las preferencias actuales más la nueva
+    const formData = new FormData()
+    
+    // Añadir preferencias existentes
+    userPreferences.forEach((pref, index) => {
+      formData.append(`preferences[${index}]`, pref.preferencia)
+    })
+    
+    // Añadir nueva preferencia
+    formData.append(`preferences[${userPreferences.length}]`, preference)
+    
+    // Mantener tipos de cocina y restricciones seleccionadas
+    const cuisineCheckboxes = document.querySelectorAll('input[name="cuisine_type[]"]:checked')
+    cuisineCheckboxes.forEach(checkbox => {
+      formData.append('cuisine_type[]', checkbox.value)
+    })
+    
+    const restrictionCheckboxes = document.querySelectorAll('input[name="dietary_restrictions[]"]:checked')
+    restrictionCheckboxes.forEach(checkbox => {
+      formData.append('dietary_restrictions[]', checkbox.value)
+    })
+    
+    const response = await fetch("api/client/update-preferences.php", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+      body: formData,
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      // Añadir a la lista local
+      const tempId = Date.now().toString()
+      userPreferences.push({ id: tempId, preferencia: preference, tipo: 'custom' })
+      displayUserPreferences()
+      
+      // Limpiar input
+      newPrefInput.value = ""
+      
+      showToast("Preferencia añadida exitosamente", "success")
+    } else {
+      showToast(result.message || "Error al añadir preferencia", "error")
+    }
+  } catch (error) {
+    console.error("Add preference error:", error)
+    showToast("Error de conexión", "error")
+  } finally {
+    hideLoading()
+  }
 }
 
 // Eliminar preferencia
-function removePreference(prefId) {
-  userPreferences = userPreferences.filter(pref => pref.id !== prefId)
-  displayUserPreferences()
+async function removePreference(prefId) {
+  try {
+    showLoading()
+    
+    // Filtrar la preferencia a eliminar
+    const updatedPreferences = userPreferences.filter(pref => pref.id !== prefId)
+    
+    // Crear FormData con las preferencias restantes
+    const formData = new FormData()
+    
+    // Añadir preferencias restantes
+    updatedPreferences.forEach((pref, index) => {
+      formData.append(`preferences[${index}]`, pref.preferencia)
+    })
+    
+    // Mantener tipos de cocina y restricciones seleccionadas
+    const cuisineCheckboxes = document.querySelectorAll('input[name="cuisine_type[]"]:checked')
+    cuisineCheckboxes.forEach(checkbox => {
+      formData.append('cuisine_type[]', checkbox.value)
+    })
+    
+    const restrictionCheckboxes = document.querySelectorAll('input[name="dietary_restrictions[]"]:checked')
+    restrictionCheckboxes.forEach(checkbox => {
+      formData.append('dietary_restrictions[]', checkbox.value)
+    })
+    
+    const response = await fetch("api/client/update-preferences.php", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+      body: formData,
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      // Actualizar lista local
+      userPreferences = updatedPreferences
+      displayUserPreferences()
+      
+      showToast("Preferencia eliminada exitosamente", "success")
+    } else {
+      showToast(result.message || "Error al eliminar preferencia", "error")
+    }
+  } catch (error) {
+    console.error("Remove preference error:", error)
+    showToast("Error de conexión", "error")
+  } finally {
+    hideLoading()
+  }
 }
 
 // Cargar chefs favoritos
@@ -387,7 +503,7 @@ function displayFavoriteRecipes() {
                 <h4>${recipe.titulo}</h4>
                 <p>Chef: ${recipe.chef_nombre}</p>
                 <div class="favorite-price">
-                    $${recipe.precio ? recipe.precio.toFixed(2) : "N/A"}
+                    $${recipe.precio ? parseFloat(recipe.precio).toFixed(2) : "N/A"}
                 </div>
                 <div class="favorite-actions">
                     <button onclick="viewRecipe(${recipe.id})" class="btn btn-sm btn-outline">
@@ -526,7 +642,7 @@ async function updatePreferences(event) {
     
     const formData = new FormData(event.target)
     
-    // Añadir preferencias actuales al formData
+    // Añadir preferencias personalizadas actuales al formData
     userPreferences.forEach((pref, index) => {
       formData.append(`preferences[${index}]`, pref.preferencia)
     })
@@ -543,6 +659,9 @@ async function updatePreferences(event) {
 
     if (result.success) {
       showToast("Preferencias actualizadas exitosamente", "success")
+      
+      // Recargar preferencias para reflejar los cambios
+      await loadUserPreferences()
     } else {
       showToast(result.message || "Error al actualizar preferencias", "error")
     }

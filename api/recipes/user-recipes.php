@@ -5,7 +5,7 @@ header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 require_once '../../config/database.php';
-require_once '../auth/auth.php';
+require_once '../../utils/auth.php';
 
 try {
     $user = requireAuth();
@@ -27,14 +27,19 @@ try {
                   FROM compras_recetas 
                   GROUP BY receta_id
               ) cr ON r.id = cr.receta_id
-              WHERE r.chef_id = :chef_id AND r.activa = 1
+              WHERE r.chef_id = ? AND r.activa = 1
               ORDER BY r.fecha_publicacion DESC";
     
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':chef_id', $user['user_id']);
+    $stmt->bind_param('i', $user['id']);
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $recipes = [];
+    while ($row = $result->fetch_assoc()) {
+        $recipes[] = $row;
+    }
+    $stmt->close();
     
     echo json_encode([
         'success' => true,
@@ -44,5 +49,9 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

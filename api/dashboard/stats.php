@@ -20,28 +20,34 @@ try {
     $db = $database->getConnection();
     
     // Total services
-    $servicesQuery = "SELECT COUNT(*) as total FROM servicios WHERE chef_id = :chef_id";
+    $servicesQuery = "SELECT COUNT(*) as total FROM servicios WHERE chef_id = ?";
     $servicesStmt = $db->prepare($servicesQuery);
-    $servicesStmt->bindParam(':chef_id', $user['user_id']);
+    $servicesStmt->bind_param('i', $user['id']);
     $servicesStmt->execute();
-    $totalServices = $servicesStmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $result = $servicesStmt->get_result();
+    $totalServices = $result->fetch_assoc()['total'];
+    $servicesStmt->close();
     
     // Average rating
-    $ratingQuery = "SELECT AVG(puntuacion) as avg_rating FROM calificaciones WHERE chef_id = :chef_id";
+    $ratingQuery = "SELECT AVG(puntuacion) as avg_rating FROM calificaciones WHERE chef_id = ?";
     $ratingStmt = $db->prepare($ratingQuery);
-    $ratingStmt->bindParam(':chef_id', $user['user_id']);
+    $ratingStmt->bind_param('i', $user['id']);
     $ratingStmt->execute();
-    $avgRating = $ratingStmt->fetch(PDO::FETCH_ASSOC)['avg_rating'] ?? 0;
+    $result = $ratingStmt->get_result();
+    $avgRating = $result->fetch_assoc()['avg_rating'] ?? 0;
+    $ratingStmt->close();
     
     // Total earnings
     $earningsQuery = "SELECT COALESCE(SUM(p.monto), 0) as total_earnings 
                      FROM pagos p 
                      INNER JOIN servicios s ON p.servicio_id = s.id 
-                     WHERE s.chef_id = :chef_id AND p.estado_pago = 'completado'";
+                     WHERE s.chef_id = ? AND p.estado_pago = 'completado'";
     $earningsStmt = $db->prepare($earningsQuery);
-    $earningsStmt->bindParam(':chef_id', $user['user_id']);
+    $earningsStmt->bind_param('i', $user['id']);
     $earningsStmt->execute();
-    $totalEarnings = $earningsStmt->fetch(PDO::FETCH_ASSOC)['total_earnings'];
+    $result = $earningsStmt->get_result();
+    $totalEarnings = $result->fetch_assoc()['total_earnings'];
+    $earningsStmt->close();
     
     echo json_encode([
         'success' => true,
@@ -55,5 +61,9 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

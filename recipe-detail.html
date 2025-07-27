@@ -15,117 +15,172 @@
     <!-- Header -->
     <header class="bg-white shadow-lg fixed w-full top-0 z-40" style="box-shadow: var(--shadow);">
         <div class="container">
-            <div class="flex justify-between items-center py-4">
-                <a href="index.html" class="logo">
+            <div class="header-content">
+                <div class="logo">
                     <div class="logo-icon">
-                        <span>LD</span>
+                        <span>D</span>
                     </div>
-                    <div class="logo-text">
-                        <span class="logo-name">La Délicatesse</span>
-                        <span class="logo-tagline">Experiencia Culinaria</span>
-                    </div>
-                </a>
-                
-                <div class="nav-container">
-                    <nav class="main-nav">
-                        <ul>
-                            <li><a href="index.html">Inicio</a></li>
-                            <li><a href="chefs-catalog.html">Chefs</a></li>
-                            <li><a href="recipes-catalog.html">Recetas</a></li>
-                            <li><a href="index.html#contacto">Contacto</a></li>
-                        </ul>
-                    </nav>
+                    <h1>La Délicatesse</h1>
                 </div>
                 
-                <div id="authButtons" class="auth-buttons">
-                    <button onclick="openModal('loginModal')" class="btn btn-outline">Iniciar Sesión</button>
-                    <button onclick="openModal('registerModal')" class="btn btn-primary">Registrarse</button>
+                <!-- Desktop Navigation -->
+                <nav class="nav-menu">
+                    <a href="index.html">Inicio</a>
+                    <a href="chefs-catalog.html">Chefs</a>
+                    <a href="recipes-catalog.html">Recetas</a>
+                </nav>
+                
+                <!-- Desktop Actions -->
+                <div id="authButtons" class="header-actions">
+                    <button class="btn btn-outline" onclick="openModal('loginModal')">Iniciar Sesión</button>
+                    <button class="btn btn-primary" onclick="openModal('registerModal')">Registrarse</button>
                 </div>
                 
-                <button class="mobile-menu-toggle">
-                    <svg id="menuIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                    <svg id="closeIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                <!-- Mobile Menu Button -->
+                <button class="mobile-menu-btn" onclick="toggleRecipeDetailMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-menu-content">
+                <nav class="mobile-nav">
+                    <a href="index.html">Inicio</a>
+                    <a href="chefs-catalog.html">Chefs</a>
+                    <a href="recipes-catalog.html">Recetas</a>
+                    <a href="#">Contacto</a>
+                </nav>
+                <div class="mobile-actions">
+                    <button class="btn btn-outline btn-block" onclick="openModal('loginModal')">Iniciar Sesión</button>
+                    <button class="btn btn-primary btn-block" onclick="openModal('registerModal')">Registrarse</button>
+                </div>
             </div>
         </div>
     </header>
     
-    <div id="mobileMenuOverlay" class="mobile-menu-overlay"></div>
-    
+
+
     <!-- Recipe Detail Section -->
-    <section class="recipe-detail-section pt-32 pb-20">
+    <section class="recipe-detail-section pb-20" style="padding-top: 100px;">
         <div class="container">
-            <div class="recipe-detail-container">
-                <div class="recipe-detail-header">
-                    <div class="recipe-detail-image">
-                        <img id="recipeImage" src="/placeholder.svg?height=400&width=600" alt="Receta">
-                        <div id="recipeDifficulty" class="recipe-detail-badge">Fácil</div>
-                    </div>
-                    <div class="recipe-detail-info">
-                        <div id="recipeCategory" class="recipe-detail-category">Cargando...</div>
-                        <h1 id="recipeTitle" class="recipe-detail-title">Cargando...</h1>
-                        
-                        <div class="recipe-detail-meta">
-                            <div class="recipe-detail-chef">
-                                <span>Por </span>
-                                <a id="recipeChefLink" href="#" class="recipe-detail-chef-name">Cargando...</a>
-                            </div>
-                            <div id="recipeDate" class="recipe-detail-date">Cargando...</div>
-                        </div>
-                        
-                        <div class="recipe-detail-stats">
-                            <div class="recipe-detail-stat">
-                                <span class="recipe-detail-stat-icon">⏱️</span>
-                                <span id="recipeTime" class="recipe-detail-stat-value">0 min</span>
-                            </div>
-                            <div class="recipe-detail-stat">
-                                <span class="recipe-detail-stat-icon">👨‍🍳</span>
-                                <span id="recipeDifficultyText" class="recipe-detail-stat-value">Fácil</span>
-                            </div>
-                            <div class="recipe-detail-stat">
-                                <span class="recipe-detail-stat-icon">💰</span>
-                                <span id="recipePrice" class="recipe-detail-stat-value">$0</span>
-                            </div>
-                        </div>
-                        
-                        <div class="recipe-detail-actions mt-6">
-                            <button id="buyRecipeBtn" class="btn btn-primary">Comprar Receta</button>
-                            <button id="addToFavoritesBtn" class="favorite-btn"><i class="far fa-heart"></i> Añadir a Favoritos</button>
+            <!-- Recipe Header -->
+            <div class="recipe-hero">
+                <div class="recipe-hero-image">
+                    <img id="recipeImage" src="/placeholder.svg?height=500&width=800" alt="Receta">
+                    <div class="recipe-overlay">
+                        <div id="recipeDifficulty" class="recipe-badge">Fácil</div>
+                        <div class="recipe-quick-actions">
+                            <button id="addToFavoritesBtn" class="quick-action-btn favorite-btn">
+                                <i class="far fa-heart"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
                 
-                <div class="recipe-detail-content mt-10">
-                    <div class="recipe-tabs">
-                        <button id="descriptionTab" class="recipe-tab active" data-tab="description">Descripción</button>
-                        <button id="ingredientsTab" class="recipe-tab" data-tab="ingredients">Ingredientes</button>
-                        <button id="instructionsTab" class="recipe-tab" data-tab="instructions">Instrucciones</button>
+                <div class="recipe-hero-content">
+                    <div class="recipe-header-info">
+                        <div id="recipeCategory" class="recipe-category">Cargando...</div>
+                        <h1 id="recipeTitle" class="recipe-title">Cargando...</h1>
+                        
+                        <div class="recipe-chef-info">
+                            <span>Por Chef </span>
+                            <a id="recipeChefLink" href="#" class="chef-link">Cargando...</a>
+                            <span class="recipe-date"> • <span id="recipeDate">Cargando...</span></span>
+                        </div>
                     </div>
                     
-                    <div class="recipe-detail-tab-content">
-                        <div id="descriptionContent" class="tab-pane active">
-                            <div class="recipe-description">
-                                <h2>Descripción</h2>
-                                <p id="recipeDescription">Cargando...</p>
+                    <div class="recipe-stats-grid">
+                        <div class="recipe-stat">
+                            <div class="stat-icon">⏱️</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Tiempo</span>
+                                <span id="recipeTime" class="stat-value">0 min</span>
                             </div>
                         </div>
-                        
-                        <div id="ingredientsContent" class="tab-pane">
-                            <div class="recipe-ingredients">
-                                <h2>Ingredientes</h2>
+                        <div class="recipe-stat">
+                            <div class="stat-icon">👨‍🍳</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Dificultad</span>
+                                <span id="recipeDifficultyText" class="stat-value">Fácil</span>
+                            </div>
+                        </div>
+                        <div class="recipe-stat">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Precio</span>
+                                <span id="recipePrice" class="stat-value">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="recipe-main-actions">
+                        <button id="buyRecipeBtn" class="btn btn-primary btn-large">
+                            <i class="fas fa-shopping-cart"></i>
+                            Comprar Receta
+                        </button>
+                        <button id="addToFavoritesBtn2" class="btn btn-outline btn-large">
+                            <i class="far fa-heart"></i>
+                            Añadir a Favoritos
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recipe Content -->
+            <div class="recipe-content">
+                <div class="recipe-navigation">
+                    <button class="recipe-nav-btn active" data-tab="description">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Descripción</span>
+                    </button>
+                    <button class="recipe-nav-btn" data-tab="ingredients">
+                        <i class="fas fa-list-ul"></i>
+                        <span>Ingredientes</span>
+                    </button>
+                    <button class="recipe-nav-btn" data-tab="instructions">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Instrucciones</span>
+                    </button>
+                </div>
+                
+                <div class="recipe-tab-content">
+                    <div id="descriptionContent" class="tab-panel active">
+                        <div class="content-card">
+                            <h2 class="content-title">
+                                <i class="fas fa-info-circle"></i>
+                                Descripción de la Receta
+                            </h2>
+                            <div class="content-body">
+                                <p id="recipeDescription" class="recipe-description-text">Cargando...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="ingredientsContent" class="tab-panel">
+                        <div class="content-card">
+                            <h2 class="content-title">
+                                <i class="fas fa-list-ul"></i>
+                                Ingredientes Necesarios
+                            </h2>
+                            <div class="content-body">
                                 <ul id="recipeIngredients" class="ingredients-list">
                                     <li class="loading-text">Cargando ingredientes...</li>
                                 </ul>
                             </div>
                         </div>
-                        
-                        <div id="instructionsContent" class="tab-pane">
-                            <div class="recipe-instructions">
-                                <h2>Instrucciones</h2>
+                    </div>
+                    
+                    <div id="instructionsContent" class="tab-panel">
+                        <div class="content-card">
+                            <h2 class="content-title">
+                                <i class="fas fa-clipboard-list"></i>
+                                Paso a Paso
+                            </h2>
+                            <div class="content-body">
                                 <ol id="recipeInstructions" class="instructions-list">
                                     <li class="loading-text">Cargando instrucciones...</li>
                                 </ol>
@@ -133,10 +188,17 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="related-recipes">
-                    <h3>Recetas Relacionadas</h3>
-                    <div id="relatedRecipes" class="recipes-grid">
+            </div>
+            
+            <!-- Related Recipes -->
+            <div class="related-recipes-section">
+                <h3 class="section-title">
+                    <i class="fas fa-utensils"></i>
+                    Más Recetas del Chef
+                </h3>
+                <div id="relatedRecipes" class="recipes-grid">
+                    <div class="loading-card">
+                        <div class="loading-skeleton"></div>
                         <p class="loading-text">Cargando recetas relacionadas...</p>
                     </div>
                 </div>
@@ -145,38 +207,69 @@
     </section>
     
     <!-- Footer -->
-    <footer class="footer">
+    <footer style="background-color: var(--dark-bg); color: var(--light-text);" class="py-16">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-col">
-                    <div class="footer-logo">
-                        <div class="logo-icon">
-                            <span>LD</span>
-                        </div>
-                        <div class="logo-text">
-                            <span class="logo-name">La Délicatesse</span>
-                            <span class="logo-tagline">Experiencia Culinaria</span>
-                        </div>
+            <div class="footer-top">
+                <div class="footer-logo">
+                    <div class="logo-icon">
+                        <span>D</span>
                     </div>
-                    <p class="footer-desc">
-                        Conectamos a chefs profesionales con clientes que buscan experiencias culinarias excepcionales.
-                    </p>
+                    <h2>La Délicatesse</h2>
                 </div>
-                <div class="footer-col">
-                    <h3>Enlaces</h3>
+                <div class="footer-tagline">
+                    Experiencias gastronómicas que trascienden
+                </div>
+            </div>
+            
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Acerca de Nosotros</h3>
+                    <p>Conectamos clientes con chefs certificados para experiencias gastronómicas únicas en la comodidad de tu hogar.</p>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon">f</a>
+                        <a href="#" class="social-icon">t</a>
+                        <a href="#" class="social-icon">i</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Enlaces Rápidos</h3>
                     <ul>
                         <li><a href="index.html">Inicio</a></li>
                         <li><a href="chefs-catalog.html">Chefs</a></li>
                         <li><a href="recipes-catalog.html">Recetas</a></li>
-                        <li><a href="index.html#contacto">Contacto</a></li>
+                        <li><a href="chefs-catalog.html">Catálogo de Chefs</a></li>
                     </ul>
                 </div>
-                <div class="footer-col">
-                    <h3>Legal</h3>
+                <div class="footer-column">
+                    <h3>Soporte</h3>
                     <ul>
-                        <li><a href="#">Términos y Condiciones</a></li>
+                        <li><a href="#">Centro de Ayuda</a></li>
+                        <li><a href="#">Términos de Servicio</a></li>
                         <li><a href="#">Política de Privacidad</a></li>
-                        <li><a href="#">Política de Cookies</a></li>
+                        <li><a href="#">Preguntas Frecuentes</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contacto</h3>
+                    <ul class="contact-info">
+                        <li>
+                            <div class="contact-item">
+                                <span class="contact-icon">📧</span>
+                                <span>info@ladelicatesse.com</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="contact-item">
+                                <span class="contact-icon">📞</span>
+                                <span>+503 2222-3333</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="contact-item">
+                                <span class="contact-icon">📍</span>
+                                <span>San Salvador, El Salvador</span>
+                            </div>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -184,6 +277,11 @@
             <div class="footer-bottom">
                 <div class="copyright">
                     &copy; 2025 La Délicatesse. Todos los derechos reservados.
+                </div>
+                <div class="footer-links">
+                    <a href="#">Términos</a>
+                    <a href="#">Privacidad</a>
+                    <a href="#">Cookies</a>
                 </div>
             </div>
         </div>

@@ -20,7 +20,7 @@ try {
               WHERE u.tipo_usuario = 'chef' AND u.activo = 1";
     
     if ($chef_id) {
-        $query .= " AND u.id = :chef_id";
+        $query .= " AND u.id = ?";
     }
     
     $query .= " ORDER BY p.calificacion_promedio DESC, p.total_servicios DESC";
@@ -28,12 +28,17 @@ try {
     $stmt = $db->prepare($query);
     
     if ($chef_id) {
-        $stmt->bindParam(':chef_id', $chef_id, PDO::PARAM_INT);
+        $stmt->bind_param('i', $chef_id);
     }
     
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    $chefs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $chefs = [];
+    while ($row = $result->fetch_assoc()) {
+        $chefs[] = $row;
+    }
+    $stmt->close();
     
     echo json_encode([
         'success' => true,
@@ -43,5 +48,9 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

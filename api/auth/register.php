@@ -44,41 +44,44 @@ try {
     }
     
     // Verificar si el email ya existe
-    $checkQuery = "SELECT id FROM usuarios WHERE email = :email";
+    $checkQuery = "SELECT id FROM usuarios WHERE email = ?";
     $checkStmt = $db->prepare($checkQuery);
-    $checkStmt->bindParam(':email', $email);
+    $checkStmt->bind_param('s', $email);
     $checkStmt->execute();
+    $result = $checkStmt->get_result();
     
-    if ($checkStmt->rowCount() > 0) {
+    if ($result->num_rows > 0) {
         echo json_encode(['success' => false, 'message' => 'El email ya está registrado']);
+        $checkStmt->close();
+        $db->close();
         exit;
     }
+    $checkStmt->close();
     
     // Encriptar contraseña
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
     
     // Insertar usuario
     $insertQuery = "INSERT INTO usuarios (nombre, email, telefono, tipo_usuario, password) 
-                    VALUES (:nombre, :email, :telefono, :tipo_usuario, :password)";
+                    VALUES (?, ?, ?, ?, ?)";
     
     $insertStmt = $db->prepare($insertQuery);
-    $insertStmt->bindParam(':nombre', $nombre);
-    $insertStmt->bindParam(':email', $email);
-    $insertStmt->bindParam(':telefono', $telefono);
-    $insertStmt->bindParam(':tipo_usuario', $tipo_usuario);
-    $insertStmt->bindParam(':password', $hashedPassword);
+    $insertStmt->bind_param('sssss', $nombre, $email, $telefono, $tipo_usuario, $hashedPassword);
     
     if ($insertStmt->execute()) {
-        $userId = $db->lastInsertId();
+        $userId = $db->insert_id;
         
         // Si es chef, crear perfil básico
         if ($tipo_usuario === 'chef') {
             $profileQuery = "INSERT INTO perfiles_chef (usuario_id, especialidad, precio_por_hora) 
-                           VALUES (:usuario_id, 'Cocina General', 25.00)";
+                           VALUES (?, 'Cocina General', 25.00)";
             $profileStmt = $db->prepare($profileQuery);
-            $profileStmt->bindParam(':usuario_id', $userId);
+            $profileStmt->bind_param('i', $userId);
             $profileStmt->execute();
+            $profileStmt->close();
         }
+        
+        $insertStmt->close();
         
         echo json_encode([
             'success' => true,
@@ -87,10 +90,15 @@ try {
         ]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Error al registrar usuario']);
+        $insertStmt->close();
     }
     
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

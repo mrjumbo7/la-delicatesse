@@ -1,6 +1,11 @@
 <?php
-require_once '../config/database.php';
-require_once '../auth/auth.php';
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+require_once '../../config/database.php';
+require_once '../../utils/auth.php';
 
 // Verificar autenticación
 $user = requireAuth();
@@ -13,7 +18,7 @@ if ($user['tipo_usuario'] !== 'cliente') {
 }
 
 // Obtener el ID del usuario autenticado
-$userId = $user['user_id'];
+$userId = $user['id'];
 
 // Conectar a la base de datos
 $db = new Database();
@@ -27,9 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $tableExists = false;
         $stmt = $conn->prepare("SHOW TABLES LIKE 'recetas_favoritas'");
         $stmt->execute();
-        if ($stmt->rowCount() > 0) {
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
             $tableExists = true;
         }
+        $stmt->close();
         
         if (!$tableExists) {
             // Si la tabla no existe, devolver un array vacío
@@ -47,10 +54,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             WHERE rf.cliente_id = ?
             ORDER BY rf.fecha_agregado DESC
         ");
-        $stmt->bindParam(1, $userId, PDO::PARAM_INT);
+        $stmt->bind_param('i', $userId);
         $stmt->execute();
+        $result = $stmt->get_result();
         
-        $favoriteRecipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $favoriteRecipes = [];
+        while ($row = $result->fetch_assoc()) {
+            $favoriteRecipes[] = $row;
+        }
+        
+        $stmt->close();
         
         // Devolver respuesta exitosa
         echo json_encode(['success' => true, 'data' => $favoriteRecipes]);
@@ -77,13 +90,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $tableExists = false;
         $stmt = $conn->prepare("SHOW TABLES LIKE 'recetas_favoritas'");
         $stmt->execute();
-        if ($stmt->rowCount() > 0) {
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
             $tableExists = true;
         }
+        $stmt->close();
         
         if (!$tableExists) {
             // Crear la tabla si no existe
-            $conn->exec("
+            $conn->query("
                 CREATE TABLE recetas_favoritas (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     cliente_id INT NOT NULL,
@@ -98,31 +113,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         // Verificar si la receta ya está en favoritos
         $stmt = $conn->prepare("SELECT id FROM recetas_favoritas WHERE cliente_id = ? AND receta_id = ?");
-        $stmt->bindParam(1, $userId, PDO::PARAM_INT);
-        $stmt->bindParam(2, $recipeId, PDO::PARAM_INT);
+        $stmt->bind_param('ii', $userId, $recipeId);
         $stmt->execute();
+        $result = $stmt->get_result();
         
-        if ($stmt->rowCount() > 0) {
+        if ($result->num_rows > 0) {
+            $stmt->close();
             echo json_encode(['success' => false, 'message' => 'Esta receta ya está en tus favoritos']);
             exit;
         }
+        $stmt->close();
         
         // Verificar que la receta exista
         $stmt = $conn->prepare("SELECT id FROM recetas WHERE id = ?");
-        $stmt->bindParam(1, $recipeId, PDO::PARAM_INT);
+        $stmt->bind_param('i', $recipeId);
         $stmt->execute();
+        $result = $stmt->get_result();
         
-        if ($stmt->rowCount() === 0) {
+        if ($result->num_rows === 0) {
+            $stmt->close();
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'La receta no existe']);
             exit;
         }
+        $stmt->close();
         
         // Añadir receta a favoritos
         $stmt = $conn->prepare("INSERT INTO recetas_favoritas (cliente_id, receta_id) VALUES (?, ?)");
-        $stmt->bindParam(1, $userId, PDO::PARAM_INT);
-        $stmt->bindParam(2, $recipeId, PDO::PARAM_INT);
+        $stmt->bind_param('ii', $userId, $recipeId);
         $stmt->execute();
+        $stmt->close();
         
         // Devolver respuesta exitosa
         echo json_encode(['success' => true, 'message' => 'Receta añadida a favoritos']);
@@ -138,6 +158,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo json_encode(['success' => false, 'message' => 'Método no permitido']);
 }
 
-// En PDO no es necesario cerrar la conexión explícitamente, se cierra automáticamente
-// cuando la variable $conn sale del ámbito
-$conn = null;
+// Cerrar conexión
+$conn->close();

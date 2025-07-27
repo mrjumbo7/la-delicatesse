@@ -100,14 +100,30 @@ async function loadChefData() {
         if (result.success) {
             currentChef = result.data;
             console.log('Datos del chef cargados correctamente:', currentChef);
+            
+            // Verificar que los datos del chef tengan la estructura correcta
+            if (!currentChef || !currentChef.profile) {
+                console.error('Error: Estructura de datos del chef incompleta:', currentChef);
+                showToast('Error: Datos del chef incompletos', 'error');
+                return;
+            }
+            
+            // El ID está en currentChef.id, no en currentChef.profile.id
+            if (!currentChef.id) {
+                console.error('Error: ID del chef no encontrado:', currentChef);
+                showToast('Error: ID del chef no encontrado', 'error');
+                return;
+            }
+            
             displayChefInfo();
             displayChefStats();
             displayChefReviews();
             displayChefRecipes();
             displayRecentServices();
             
-            // Solo actualizar el botón de favoritos si el usuario está autenticado
-            if (isAuthenticated) {
+            // Solo actualizar el botón de favoritos si el usuario está autenticado y los datos están completos
+            if (isAuthenticated && currentChef.id) {
+                console.log('Actualizando botón de favoritos para chef ID:', currentChef.id);
                 updateFavoriteButton();
             }
         } else {
@@ -147,7 +163,7 @@ function displayChefInfo() {
 
         // Setup buttons
         const bookChefBtn = document.getElementById('bookChefBtn');
-        bookChefBtn.onclick = () => bookChef(profile.id);
+        bookChefBtn.onclick = () => bookChef(currentChef.id);
         
         // Cambiar el texto del botón de reserva si el usuario no está autenticado
         if (!isAuthenticated) {
@@ -157,7 +173,12 @@ function displayChefInfo() {
         }
 
         const favoriteBtn = document.getElementById('favoriteBtn');
-        favoriteBtn.onclick = () => toggleFavorite(profile.id);
+        if (favoriteBtn) {
+            favoriteBtn.onclick = () => {
+                console.log('Botón de favoritos clickeado, ID del chef:', currentChef.id);
+                toggleFavorite(currentChef.id);
+            };
+        }
         
         // Cambiar el texto del botón de favoritos si el usuario no está autenticado
         if (!isAuthenticated) {
@@ -179,24 +200,37 @@ function displayChefStats() {
     try {
         const stats = currentChef.estadisticas;
         
+        // Verificar si ya existe el contenedor de estadísticas y eliminarlo
+        const existingStats = document.querySelector('.chef-stats-container');
+        if (existingStats) {
+            existingStats.remove();
+        }
+        
+        // Obtener traducciones según el idioma actual
+        const currentLang = window.currentLanguage || 'es';
+        const serviciosTotalesText = currentLang === 'es' ? 'Servicios Totales' : 'Total Services';
+        const completadosText = currentLang === 'es' ? 'Completados' : 'Completed';
+        const reviewsText = currentLang === 'es' ? 'Reviews' : 'Reviews';
+        const tasaExitoText = currentLang === 'es' ? 'Tasa Éxito' : 'Success Rate';
+        
         // Actualizar estadísticas en la información del chef
         const statsHtml = `
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 p-4 rounded-lg" style="background-color: var(--bg-light);">
+            <div class="chef-stats-container grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 p-4 rounded-lg" style="background-color: var(--bg-light);">
                 <div class="text-center">
                     <div class="text-2xl font-bold" style="color: var(--primary-color);">${stats.total_servicios}</div>
-                    <div class="text-sm" style="color: var(--text-light);">Servicios Totales</div>
+                    <div class="text-sm" style="color: var(--text-light);">${serviciosTotalesText}</div>
                 </div>
                 <div class="text-center">
                     <div class="text-2xl font-bold" style="color: var(--primary-color);">${stats.servicios_completados}</div>
-                    <div class="text-sm" style="color: var(--text-light);">Completados</div>
+                    <div class="text-sm" style="color: var(--text-light);">${completadosText}</div>
                 </div>
                 <div class="text-center">
                     <div class="text-2xl font-bold" style="color: var(--primary-color);">${stats.total_reviews}</div>
-                    <div class="text-sm" style="color: var(--text-light);">Reviews</div>
+                    <div class="text-sm" style="color: var(--text-light);">${reviewsText}</div>
                 </div>
                 <div class="text-center">
                     <div class="text-2xl font-bold" style="color: var(--primary-color);">${stats.tasa_completacion}%</div>
-                    <div class="text-sm" style="color: var(--text-light);">Tasa Éxito</div>
+                    <div class="text-sm" style="color: var(--text-light);">${tasaExitoText}</div>
                 </div>
             </div>
         `;
@@ -392,6 +426,12 @@ async function toggleFavorite(chefId) {
         return;
     }
     
+    // Si no se proporciona chefId, intentar obtenerlo de currentChef
+    if (!chefId && currentChef && currentChef.id) {
+        chefId = currentChef.id;
+        console.log('Usando ID del chef desde currentChef:', chefId);
+    }
+    
     if (!chefId) {
         console.error('Error: ID del chef no proporcionado');
         showToast('Error al actualizar favoritos: ID del chef no válido', 'error');
@@ -408,7 +448,7 @@ async function toggleFavorite(chefId) {
             return;
         }
         
-        const response = await fetch('api/client/favorites.php', {
+        const response = await fetch('/la-delicatesse/api/client/favorites.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -444,8 +484,14 @@ async function updateFavoriteButton() {
         return;
     }
     
-    if (!currentChef || !currentChef.profile || !currentChef.profile.id) {
-        console.error('Error: No hay información del chef para actualizar favoritos');
+    // Verificar que currentChef tenga la estructura correcta
+    if (!currentChef) {
+        console.error('Error: currentChef no está definido');
+        return;
+    }
+    
+    if (!currentChef.id) {
+        console.error('Error: currentChef.id no está definido');
         return;
     }
 
@@ -458,7 +504,7 @@ async function updateFavoriteButton() {
             return;
         }
         
-        const response = await fetch('api/client/favorites.php', {
+        const response = await fetch('/la-delicatesse/api/client/favorites.php', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -479,7 +525,7 @@ async function updateFavoriteButton() {
                 return;
             }
             
-            const isFavorite = result.data && Array.isArray(result.data) && result.data.some(fav => fav.id === currentChef.profile.id);
+            const isFavorite = result.data && Array.isArray(result.data) && result.data.some(fav => fav.id === currentChef.id);
             console.log('¿Es favorito?:', isFavorite);
             
             if (isFavorite) {

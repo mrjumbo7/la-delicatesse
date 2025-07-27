@@ -20,28 +20,34 @@ try {
     $db = $database->getConnection();
     
     // Total reservations
-    $reservationsQuery = "SELECT COUNT(*) as total FROM servicios WHERE cliente_id = :user_id";
+    $reservationsQuery = "SELECT COUNT(*) as total FROM servicios WHERE cliente_id = ?";
     $reservationsStmt = $db->prepare($reservationsQuery);
-    $reservationsStmt->bindParam(':user_id', $user['user_id']);
+    $reservationsStmt->bind_param('i', $user['id']);
     $reservationsStmt->execute();
-    $totalReservations = $reservationsStmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $result = $reservationsStmt->get_result();
+    $totalReservations = $result->fetch_assoc()['total'];
+    $reservationsStmt->close();
     
     // Total favorites
-    $favoritesQuery = "SELECT COUNT(*) as total FROM chefs_favoritos WHERE cliente_id = :user_id";
+    $favoritesQuery = "SELECT COUNT(*) as total FROM chefs_favoritos WHERE cliente_id = ?";
     $favoritesStmt = $db->prepare($favoritesQuery);
-    $favoritesStmt->bindParam(':user_id', $user['user_id']);
+    $favoritesStmt->bind_param('i', $user['id']);
     $favoritesStmt->execute();
-    $totalFavorites = $favoritesStmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $result = $favoritesStmt->get_result();
+    $totalFavorites = $result->fetch_assoc()['total'];
+    $favoritesStmt->close();
     
     // Total spent
     $spentQuery = "SELECT COALESCE(SUM(p.monto), 0) as total 
                    FROM pagos p 
                    INNER JOIN servicios s ON p.servicio_id = s.id 
-                   WHERE s.cliente_id = :user_id AND p.estado_pago = 'completado'";
+                   WHERE s.cliente_id = ? AND p.estado_pago = 'completado'";
     $spentStmt = $db->prepare($spentQuery);
-    $spentStmt->bindParam(':user_id', $user['user_id']);
+    $spentStmt->bind_param('i', $user['id']);
     $spentStmt->execute();
-    $totalSpent = $spentStmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $result = $spentStmt->get_result();
+    $totalSpent = $result->fetch_assoc()['total'];
+    $spentStmt->close();
     
     echo json_encode([
         'success' => true,
@@ -55,5 +61,9 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

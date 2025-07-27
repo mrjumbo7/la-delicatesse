@@ -1,6 +1,11 @@
 <?php
-require_once '../config/database.php';
-require_once '../auth/auth.php';
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+require_once '../../config/database.php';
+require_once '../../utils/auth.php';
 
 // Verificar autenticación
 $user = requireAuth();
@@ -28,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             SELECT c.id, c.servicio_id, c.puntuacion, c.comentario, c.fecha_calificacion, 
                    c.titulo, c.aspectos_positivos, c.aspectos_mejora, c.recomendaria,
                    u.id as chef_id, u.nombre as chef_nombre, u.email as chef_email,
-                   s.fecha as servicio_fecha, s.ubicacion as servicio_ubicacion
+                   s.fecha_servicio as servicio_fecha, s.ubicacion_servicio as servicio_ubicacion
             FROM calificaciones c
             JOIN servicios s ON c.servicio_id = s.id
             JOIN usuarios u ON s.chef_id = u.id

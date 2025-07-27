@@ -28,13 +28,15 @@ try {
     $query = "SELECT u.*, p.especialidad, p.precio_por_hora, p.calificacion_promedio 
               FROM usuarios u 
               LEFT JOIN perfiles_chef p ON u.id = p.usuario_id 
-              WHERE u.email = :email AND u.activo = 1";
+              WHERE u.email = ? AND u.activo = 1";
     
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':email', $email);
+    $stmt->bind_param('s', $email);
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user = $result->fetch_assoc();
+    $stmt->close();
     
     if (!$user || !password_verify($password, $user['password'])) {
         echo json_encode(['success' => false, 'message' => 'Credenciales inválidas']);
@@ -62,5 +64,9 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

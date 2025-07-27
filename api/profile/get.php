@@ -5,7 +5,7 @@ header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 require_once '../../config/database.php';
-require_once '../auth/auth.php';
+require_once '../../utils/auth.php';
 
 try {
     $user = requireAuth();
@@ -18,13 +18,15 @@ try {
                      p.calificacion_promedio, p.total_servicios
               FROM usuarios u
               LEFT JOIN perfiles_chef p ON u.id = p.usuario_id
-              WHERE u.id = :user_id";
+              WHERE u.id = ?";
     
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':user_id', $user['user_id']);
+    $stmt->bind_param('i', $user['id']);
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    $profile = $result->fetch_assoc();
+    $stmt->close();
     
     if (!$profile) {
         echo json_encode(['success' => false, 'message' => 'Perfil no encontrado']);
@@ -42,5 +44,9 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

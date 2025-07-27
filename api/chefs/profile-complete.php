@@ -26,19 +26,21 @@ try {
               COALESCE(t.especialidad, pc.especialidad) as especialidad_traducida
               FROM usuarios u
               INNER JOIN perfiles_chef pc ON u.id = pc.usuario_id
-              LEFT JOIN traducciones_perfil_chef t ON pc.id = t.perfil_chef_id AND t.idioma = :lang
-              WHERE u.id = :chef_id AND u.tipo_usuario = 'chef'";
+              LEFT JOIN traducciones_perfil_chef t ON pc.id = t.perfil_chef_id AND t.idioma = ?
+              WHERE u.id = ? AND u.tipo_usuario = 'chef'";
     
     $stmt = $db->prepare($profileQuery);
-    $stmt->bindParam(':chef_id', $chef_id);
-    $stmt->bindParam(':lang', $language);
+    $stmt->bind_param('si', $language, $chef_id);
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    if ($stmt->rowCount() === 0) {
+    if ($result->num_rows === 0) {
+        $stmt->close();
         throw new Exception('Perfil de chef no encontrado');
     }
     
-    $chef_profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    $chef_profile = $result->fetch_assoc();
+    $stmt->close();
     
     // Obtener estadísticas del chef
     $statsQuery = "SELECT 
@@ -49,12 +51,14 @@ try {
                     SUM(CASE WHEN s.estado = 'completado' THEN s.precio_total ELSE 0 END) as ingresos_totales
                    FROM servicios s
                    LEFT JOIN calificaciones c ON s.id = c.servicio_id
-                   WHERE s.chef_id = :chef_id";
+                   WHERE s.chef_id = ?";
     
     $statsStmt = $db->prepare($statsQuery);
-    $statsStmt->bindParam(':chef_id', $chef_id);
+    $statsStmt->bind_param('i', $chef_id);
     $statsStmt->execute();
-    $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
+    $result = $statsStmt->get_result();
+    $stats = $result->fetch_assoc();
+    $statsStmt->close();
     
     // Obtener reviews recientes (últimas 5)
     $reviewsQuery = "SELECT c.id, c.puntuacion as calificacion, c.comentario, 
@@ -65,27 +69,37 @@ try {
               FROM calificaciones c
               JOIN servicios s ON c.servicio_id = s.id
               JOIN usuarios u ON c.cliente_id = u.id
-              WHERE c.chef_id = :chef_id
+              WHERE c.chef_id = ?
               ORDER BY c.fecha_calificacion DESC
               LIMIT 5";
     
     $reviewsStmt = $db->prepare($reviewsQuery);
-    $reviewsStmt->bindParam(':chef_id', $chef_id);
+    $reviewsStmt->bind_param('i', $chef_id);
     $reviewsStmt->execute();
-    $reviews = $reviewsStmt->fetchAll(PDO::FETCH_ASSOC);
+    $result = $reviewsStmt->get_result();
+    $reviews = [];
+    while ($row = $result->fetch_assoc()) {
+        $reviews[] = $row;
+    }
+    $reviewsStmt->close();
     
     // Obtener recetas del chef
     $recipesQuery = "SELECT r.id, r.titulo as nombre, r.descripcion as descripcion_corta, 
                      r.tiempo_preparacion, r.dificultad, r.precio, r.imagen,
                      r.fecha_publicacion, r.ingredientes, r.instrucciones
                      FROM recetas r
-                     WHERE r.chef_id = :chef_id AND r.activa = 1
+                     WHERE r.chef_id = ? AND r.activa = 1
                      ORDER BY r.fecha_publicacion DESC";
     
     $recipesStmt = $db->prepare($recipesQuery);
-    $recipesStmt->bindParam(':chef_id', $chef_id);
+    $recipesStmt->bind_param('i', $chef_id);
     $recipesStmt->execute();
-    $recipes = $recipesStmt->fetchAll(PDO::FETCH_ASSOC);
+    $result = $recipesStmt->get_result();
+    $recipes = [];
+    while ($row = $result->fetch_assoc()) {
+        $recipes[] = $row;
+    }
+    $recipesStmt->close();
     
     // Obtener servicios recientes (últimos 5 completados)
     $servicesQuery = "SELECT s.id, s.fecha_servicio, s.ubicacion_servicio, 
@@ -93,14 +107,19 @@ try {
                       u.nombre as cliente_nombre
                       FROM servicios s
                       JOIN usuarios u ON s.cliente_id = u.id
-                      WHERE s.chef_id = :chef_id AND s.estado = 'completado'
+                      WHERE s.chef_id = ? AND s.estado = 'completado'
                       ORDER BY s.fecha_servicio DESC
                       LIMIT 5";
     
     $servicesStmt = $db->prepare($servicesQuery);
-    $servicesStmt->bindParam(':chef_id', $chef_id);
+    $servicesStmt->bind_param('i', $chef_id);
     $servicesStmt->execute();
-    $recent_services = $servicesStmt->fetchAll(PDO::FETCH_ASSOC);
+    $result = $servicesStmt->get_result();
+    $recent_services = [];
+    while ($row = $result->fetch_assoc()) {
+        $recent_services[] = $row;
+    }
+    $servicesStmt->close();
     
     // Estructurar la respuesta completa
     $response = [
@@ -143,5 +162,9 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

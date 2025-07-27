@@ -21,18 +21,23 @@ try {
                      c.fecha_calificacion as fecha, c.titulo, 
                      c.aspectos_positivos, c.aspectos_mejora, c.recomendaria,
                      u.nombre as cliente_nombre,
-                     s.fecha as servicio_fecha, s.ubicacion as servicio_ubicacion
+                     s.fecha_servicio as servicio_fecha, s.ubicacion_servicio as servicio_ubicacion
               FROM calificaciones c
               JOIN servicios s ON c.servicio_id = s.id
               JOIN usuarios u ON c.cliente_id = u.id
-              WHERE c.chef_id = :chef_id
+              WHERE c.chef_id = ?
               ORDER BY c.fecha_calificacion DESC";
     
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':chef_id', $chef_id, PDO::PARAM_INT);
+    $stmt->bind_param('i', $chef_id);
     $stmt->execute();
+    $result = $stmt->get_result();
     
-    $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $reviews = [];
+    while ($row = $result->fetch_assoc()) {
+        $reviews[] = $row;
+    }
+    $stmt->close();
     
     echo json_encode([
         'success' => true,
@@ -42,5 +47,9 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor: ' . $e->getMessage()]);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

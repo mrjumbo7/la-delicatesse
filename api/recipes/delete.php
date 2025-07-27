@@ -34,42 +34,50 @@ try {
     $db = $database->getConnection();
     
     // Verificar que la receta pertenece al chef
-    $checkQuery = "SELECT id, imagen FROM recetas WHERE id = :recipe_id AND chef_id = :chef_id";
+    $checkQuery = "SELECT id, imagen FROM recetas WHERE id = ? AND chef_id = ?";
     $checkStmt = $db->prepare($checkQuery);
-    $checkStmt->bindParam(':recipe_id', $recipe_id);
-    $checkStmt->bindParam(':chef_id', $user['user_id']);
+    $checkStmt->bind_param('ii', $recipe_id, $user['id']);
     $checkStmt->execute();
-    
-    $recipe = $checkStmt->fetch(PDO::FETCH_ASSOC);
+    $result = $checkStmt->get_result();
+    $recipe = $result->fetch_assoc();
+    $checkStmt->close();
     
     if (!$recipe) {
         echo json_encode(['success' => false, 'message' => 'Receta no encontrada o no autorizada']);
         exit;
     }
     
-    $db->beginTransaction();
+    $db->autocommit(false);
     
     try {
         // Obtener todas las imágenes asociadas para eliminarlas
-        $imagesQuery = "SELECT imagen_url FROM imagenes_recetas WHERE receta_id = :recipe_id";
+        $imagesQuery = "SELECT imagen_url FROM imagenes_recetas WHERE receta_id = ?";
         $imagesStmt = $db->prepare($imagesQuery);
-        $imagesStmt->bindParam(':recipe_id', $recipe_id);
+        $imagesStmt->bind_param('i', $recipe_id);
         $imagesStmt->execute();
-        $images = $imagesStmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $imagesStmt->get_result();
+        $images = [];
+        while ($row = $result->fetch_assoc()) {
+            $images[] = $row;
+        }
+        $imagesStmt->close();
         
         // Eliminar registros de imágenes de la base de datos
-        $deleteImagesQuery = "DELETE FROM imagenes_recetas WHERE receta_id = :recipe_id";
+        $deleteImagesQuery = "DELETE FROM imagenes_recetas WHERE receta_id = ?";
         $deleteImagesStmt = $db->prepare($deleteImagesQuery);
-        $deleteImagesStmt->bindParam(':recipe_id', $recipe_id);
+        $deleteImagesStmt->bind_param('i', $recipe_id);
         $deleteImagesStmt->execute();
+        $deleteImagesStmt->close();
         
         // Marcar la receta como inactiva en lugar de eliminarla
-        $updateQuery = "UPDATE recetas SET activa = 0 WHERE id = :recipe_id";
+        $updateQuery = "UPDATE recetas SET activa = 0 WHERE id = ?";
         $updateStmt = $db->prepare($updateQuery);
-        $updateStmt->bindParam(':recipe_id', $recipe_id);
+        $updateStmt->bind_param('i', $recipe_id);
         $updateStmt->execute();
+        $updateStmt->close();
         
         $db->commit();
+        $db->autocommit(true);
         
         // Eliminar archivos físicos
         if ($recipe['imagen'] && file_exists('../../' . $recipe['imagen'])) {
@@ -89,11 +97,16 @@ try {
         
     } catch (Exception $e) {
         $db->rollback();
+        $db->autocommit(true);
         throw $e;
     }
     
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+} finally {
+    if (isset($db)) {
+        $db->close();
+    }
 }
 ?>

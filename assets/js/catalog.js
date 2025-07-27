@@ -114,6 +114,11 @@ function displayChefsCatalog(chefsToShow) {
                         Contactar
                     </button>
                 </div>
+                <div class="mt-2">
+                    <button onclick="addChefToFavorites(${chef.id})" class="favorite-btn w-full">
+                        <i class="far fa-heart"></i> Añadir a Favoritos
+                    </button>
+                </div>
             </div>
         </div>
     `).join('')
@@ -199,7 +204,8 @@ function displayRecipesCatalog(recipesToShow) {
 // View recipe function - opens modal instead of redirecting
 function viewRecipe(recipeId) {
     // Check if user is authenticated
-    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    const userData = localStorage.getItem('userData')
+    const user = userData ? JSON.parse(userData) : null
     
     if (!user) {
         showToast('Debes iniciar sesión para ver los detalles de las recetas', 'warning')
@@ -286,11 +292,18 @@ function populateRecipeModal(recipe) {
     // Setup favorites button
     const favBtn = document.getElementById('modalAddToFavoritesBtn')
     favBtn.onclick = () => addToFavorites(recipe.id)
+    
+    // Setup detail button
+    const detailBtn = document.getElementById('modalViewDetailBtn')
+    if (detailBtn) {
+        detailBtn.onclick = () => viewRecipeDetail(recipe.id)
+    }
 }
 
 // Buy recipe function
 function buyRecipe(recipeId) {
-    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    const userData = localStorage.getItem('userData')
+    const user = userData ? JSON.parse(userData) : null
     
     if (!user) {
         showToast('Debes iniciar sesión para comprar recetas', 'warning')
@@ -303,9 +316,10 @@ function buyRecipe(recipeId) {
     showToast('Funcionalidad de compra en desarrollo', 'info')
 }
 
-// Add to favorites function
+// Add recipe to favorites function
 function addToFavorites(recipeId) {
-    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    const userData = localStorage.getItem('userData')
+    const user = userData ? JSON.parse(userData) : null
     
     if (!user) {
         showToast('Debes iniciar sesión para añadir a favoritos', 'warning')
@@ -314,8 +328,64 @@ function addToFavorites(recipeId) {
         return
     }
     
-    // Here you would implement the actual favorites logic
-    showToast('Receta añadida a favoritos', 'success')
+    addToFavoritesAPI('recipe', recipeId)
+}
+
+// Navigate to recipe detail page
+function viewRecipeDetail(recipeId) {
+    const userData = localStorage.getItem('userData')
+    const user = userData ? JSON.parse(userData) : null
+    
+    if (!user) {
+        showToast('Debes iniciar sesión para ver los detalles de las recetas', 'warning')
+        return
+    }
+    
+    // Store recipe ID for the detail page
+    localStorage.setItem('selectedRecipeId', recipeId)
+    
+    // Close modal and navigate to detail page
+    closeModal('recipeModal')
+    window.location.href = `recipe-detail.html?id=${recipeId}`
+}
+
+// Add chef to favorites function
+function addChefToFavorites(chefId) {
+    const userData = localStorage.getItem('userData')
+    const user = userData ? JSON.parse(userData) : null
+    
+    if (!user) {
+        showToast('Debes iniciar sesión para añadir a favoritos', 'warning')
+        openModal('loginModal')
+        return
+    }
+    
+    addToFavoritesAPI('chef', chefId)
+}
+
+// Generic function to add to favorites via API
+async function addToFavoritesAPI(type, id) {
+    try {
+        const response = await fetch('api/client/add-favorite.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({ type, id })
+        })
+        
+        const result = await response.json()
+        
+        if (result.success) {
+            showToast(result.message || `${type === 'chef' ? 'Chef' : 'Receta'} añadido a favoritos`, 'success')
+        } else {
+            showToast(result.message || 'Error al añadir a favoritos', 'error')
+        }
+    } catch (error) {
+        console.error('Error adding to favorites:', error)
+        showToast('Error de conexión', 'error')
+    }
 }
 
 // Filter recipes in catalog

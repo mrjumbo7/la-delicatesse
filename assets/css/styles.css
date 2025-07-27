@@ -215,6 +215,17 @@ nav ul {
   align-items: center;
 }
 
+/* Centrar el botón de idioma con respecto a los enlaces */
+nav ul li:last-child {
+  display: flex;
+  align-items: center;
+}
+
+nav ul li:last-child button {
+  margin: 0;
+  align-self: center;
+}
+
 nav a {
   font-weight: 500;
   font-size: 0.9rem;
