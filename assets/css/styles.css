@@ -2186,3 +2186,184 @@ textarea:focus {
   }
 }
 
+/* Booking Modal Styles */
+.booking-modal-header {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.booking-modal-content {
+  background-color: var(--light-bg);
+}
+
+.booking-form-left,
+.booking-form-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.booking-price-summary {
+  background-color: var(--gray-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.price-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.price-item:last-child {
+  border-bottom: none;
+}
+
+.price-item.total {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  border-top: 2px solid var(--primary-color);
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+}
+
+.price-item span:first-child {
+  color: var(--text-light);
+}
+
+.price-item span:last-child {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.price-item.total span {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.booking-form-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+}
+
+/* Form row for booking */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .booking-modal-content .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .booking-price-summary {
+    padding: 1rem;
+  }
+  
+  .price-item {
+    font-size: 0.9rem;
+  }
+  
+  .price-item.total {
+    font-size: 1rem;
+  }
+}
+
+/* Toast notifications */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  max-width: 280px;
+  min-width: 200px;
+  width: auto;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--border-radius);
+  color: var(--light-text);
+  font-weight: 500;
+  font-size: 12px;
+  box-shadow: var(--shadow-lg);
+  z-index: 10000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.info {
+  background-color: #2196F3;
+}
+
+.toast.success {
+  background-color: #4CAF50;
+}
+
+.toast.warning {
+  background-color: #ff9800;
+}
+
+.toast.error {
+  background-color: #f44336;
+}
+
+@media (max-width: 768px) {
+  .toast {
+    right: 15px;
+    max-width: 250px;
+    min-width: 180px;
+    height: 28px;
+    font-size: 11px;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .toast {
+    right: 10px;
+    max-width: 200px;
+    min-width: 150px;
+    height: 24px;
+    bottom: 15px;
+    font-size: 10px;
+    padding: 0 8px;
+  }
+}
+
+/* Loading spinner */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+#globalLoader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+

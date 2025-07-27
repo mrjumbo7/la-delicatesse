@@ -349,6 +349,26 @@ function viewRecipeDetail(recipeId) {
     window.location.href = `recipe-detail.html?id=${recipeId}`
 }
 
+// Contact chef function
+function contactChef(chefId) {
+    const userData = localStorage.getItem('userData')
+    const user = userData ? JSON.parse(userData) : null
+    
+    if (!user) {
+        showToast('Debes iniciar sesión para contactar al chef', 'warning')
+        openModal('loginModal')
+        return
+    }
+    
+    // Check if openBookingModal function exists
+    if (typeof openBookingModal === 'function') {
+        openBookingModal(chefId)
+    } else {
+        // Fallback to redirect to index with booking hash
+        window.location.href = `index.html#booking?chef=${chefId}`
+    }
+}
+
 // Add chef to favorites function
 function addChefToFavorites(chefId) {
     const userData = localStorage.getItem('userData')

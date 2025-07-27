@@ -170,7 +170,7 @@ function resetProfileForm() {
 
 // Load dashboard data
 async function loadDashboardData() {
-  await Promise.all([loadUserStats(), loadServices(), loadUserRecipes(), loadConversations(), loadRecentActivity()])
+  await Promise.all([loadUserStats(), loadServices(), loadUserRecipes(), loadConversations(), loadRecentActivity(), loadNotifications()])
 }
 
 // Load user statistics
@@ -198,7 +198,7 @@ async function loadUserStats() {
 // Load services
 async function loadServices() {
   try {
-    const response = await fetch("api/services/user-services.php", {
+    const response = await fetch("api/services/chef-services.php", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
@@ -209,6 +209,7 @@ async function loadServices() {
     if (result.success) {
       services = result.data
       displayServices()
+      displayServicesCalendar()
     }
   } catch (error) {
     console.error("Error loading services:", error)
@@ -235,9 +236,10 @@ function displayServices() {
                     <h4 class="text-lg font-semibold mb-2" style="color: var(--primary-color); font-family: var(--font-heading);">${service.cliente_nombre}</h4>
                     <p style="color: var(--text-light);">${formatDate(service.fecha_servicio)} - ${service.hora_servicio}</p>
                     <p style="color: var(--text-light);">${service.ubicacion_servicio}</p>
+                    <p style="color: var(--text-light);">Comensales: ${service.numero_comensales}</p>
                 </div>
                 <div class="text-right">
-                    <span class="status-badge status-${service.estado}">${service.estado}</span>
+                    <span class="status-badge status-${service.estado}">${getStatusText(service.estado)}</span>
                     <p class="text-lg font-bold mt-2" style="color: var(--accent-color); font-family: var(--font-heading);">${formatCurrency(service.precio_total)}</p>
                 </div>
             </div>
@@ -254,6 +256,15 @@ function displayServices() {
                     </button>
                     <button onclick="rejectService(${service.id})" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #dc2626;">
                         Rechazar
+                    </button>
+                `
+                    : service.estado === "aceptado"
+                    ? `
+                    <button onclick="completeService(${service.id})" class="btn btn-primary btn-sm">
+                        Marcar Completado
+                    </button>
+                    <button onclick="cancelService(${service.id})" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #dc2626;">
+                        Cancelar
                     </button>
                 `
                     : ""
@@ -1020,6 +1031,324 @@ function formatDate(dateString) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(dateString))
+}
+
+function getStatusText(status) {
+  const statusTexts = {
+    'pendiente': 'Pendiente',
+    'aceptado': 'Aceptado',
+    'rechazado': 'Rechazado',
+    'completado': 'Completado',
+    'cancelado': 'Cancelado'
+  }
+  return statusTexts[status] || status
+}
+
+// Service management functions
+async function acceptService(serviceId) {
+  if (!confirm('¿Estás seguro de que quieres aceptar este servicio?')) {
+    return
+  }
+  
+  await updateServiceStatus(serviceId, 'aceptado')
+}
+
+async function rejectService(serviceId) {
+  const motivo = prompt('Motivo del rechazo (opcional):')
+  
+  if (!confirm('¿Estás seguro de que quieres rechazar este servicio?')) {
+    return
+  }
+  
+  await updateServiceStatus(serviceId, 'rechazado', motivo)
+}
+
+async function completeService(serviceId) {
+  if (!confirm('¿Confirmas que el servicio ha sido completado?')) {
+    return
+  }
+  
+  await updateServiceStatus(serviceId, 'completado')
+}
+
+async function cancelService(serviceId) {
+  const motivo = prompt('Motivo de la cancelación (opcional):')
+  
+  if (!confirm('¿Estás seguro de que quieres cancelar este servicio?')) {
+    return
+  }
+  
+  await updateServiceStatus(serviceId, 'cancelado', motivo)
+}
+
+async function updateServiceStatus(serviceId, estado, motivo = null) {
+  try {
+    const response = await fetch('api/services/chef-services.php', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: JSON.stringify({
+        service_id: serviceId,
+        estado: estado,
+        motivo: motivo
+      })
+    })
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      showToast('Estado del servicio actualizado correctamente', 'success')
+      loadServices() // Recargar servicios
+    } else {
+      showToast(result.message || 'Error al actualizar el servicio', 'error')
+    }
+  } catch (error) {
+    console.error('Error updating service status:', error)
+    showToast('Error al actualizar el servicio', 'error')
+  }
+}
+
+// Calendar view for services
+function displayServicesCalendar() {
+  const calendarContainer = document.getElementById('servicesCalendar')
+  if (!calendarContainer) return
+  
+  // Group services by date
+  const servicesByDate = {}
+  services.forEach(service => {
+    const date = service.fecha_servicio
+    if (!servicesByDate[date]) {
+      servicesByDate[date] = []
+    }
+    servicesByDate[date].push(service)
+  })
+  
+  // Generate calendar HTML
+  let calendarHTML = '<div class="calendar-grid">'
+  
+  // Get current month dates
+  const today = new Date()
+  const currentMonth = today.getMonth()
+  const currentYear = today.getFullYear()
+  const firstDay = new Date(currentYear, currentMonth, 1)
+  const lastDay = new Date(currentYear, currentMonth + 1, 0)
+  
+  // Calendar header
+  calendarHTML += `
+    <div class="calendar-header mb-4">
+      <h4 class="text-lg font-semibold" style="color: var(--primary-color);">
+        ${firstDay.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+      </h4>
+    </div>
+  `
+  
+  // Days of week
+  const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  calendarHTML += '<div class="grid grid-cols-7 gap-1 mb-2">'
+  daysOfWeek.forEach(day => {
+    calendarHTML += `<div class="text-center text-sm font-medium p-2" style="color: var(--text-light);">${day}</div>`
+  })
+  calendarHTML += '</div>'
+  
+  // Calendar days
+  calendarHTML += '<div class="grid grid-cols-7 gap-1">'
+  
+  // Empty cells for days before month starts
+  const startDay = firstDay.getDay()
+  for (let i = 0; i < startDay; i++) {
+    calendarHTML += '<div class="calendar-day empty"></div>'
+  }
+  
+  // Days of the month
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    const dayServices = servicesByDate[dateStr] || []
+    const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()
+    
+    calendarHTML += `
+      <div class="calendar-day ${isToday ? 'today' : ''} ${dayServices.length > 0 ? 'has-services' : ''}" 
+           onclick="showDayServices('${dateStr}')">
+        <div class="day-number">${day}</div>
+        ${dayServices.length > 0 ? `<div class="service-count">${dayServices.length}</div>` : ''}
+      </div>
+    `
+  }
+  
+  calendarHTML += '</div></div>'
+  
+  calendarContainer.innerHTML = calendarHTML
+}
+
+function showDayServices(date) {
+  const dayServices = services.filter(service => service.fecha_servicio === date)
+  
+  if (dayServices.length === 0) {
+    showToast('No hay servicios programados para este día', 'info')
+    return
+  }
+  
+  let servicesHTML = `
+    <div class="day-services-modal">
+      <h4 class="text-lg font-semibold mb-4" style="color: var(--primary-color);">
+        Servicios del ${formatDate(date)}
+      </h4>
+      <div class="space-y-3">
+  `
+  
+  dayServices.forEach(service => {
+    servicesHTML += `
+      <div class="p-3 rounded-lg" style="background-color: var(--gray-bg); border: 1px solid var(--border-color);">
+        <div class="flex justify-between items-start">
+          <div>
+            <h5 class="font-medium" style="color: var(--primary-color);">${service.cliente_nombre}</h5>
+            <p class="text-sm" style="color: var(--text-light);">${service.hora_servicio} - ${service.ubicacion_servicio}</p>
+            <p class="text-sm" style="color: var(--text-light);">Comensales: ${service.numero_comensales}</p>
+          </div>
+          <div class="text-right">
+            <span class="status-badge status-${service.estado}">${getStatusText(service.estado)}</span>
+            <p class="text-sm font-medium" style="color: var(--accent-color);">${formatCurrency(service.precio_total)}</p>
+          </div>
+        </div>
+        <div class="mt-2">
+          <button onclick="viewServiceDetails(${service.id}); closeModal('dayServicesModal')" class="btn btn-outline btn-sm">
+            Ver Detalles
+          </button>
+        </div>
+      </div>
+    `
+  })
+  
+  servicesHTML += `
+      </div>
+      <div class="mt-4 text-center">
+        <button onclick="closeModal('dayServicesModal')" class="btn btn-outline">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  `
+  
+  // Create and show modal
+  const modal = document.createElement('div')
+  modal.id = 'dayServicesModal'
+  modal.className = 'modal'
+  modal.innerHTML = `
+    <div class="modal-content">
+      ${servicesHTML}
+    </div>
+  `
+  
+  document.body.appendChild(modal)
+  modal.style.display = 'flex'
+}
+
+// Services view management
+function showServicesView(view) {
+  const listView = document.getElementById('servicesListView')
+  const calendarView = document.getElementById('servicesCalendarView')
+  const listBtn = document.getElementById('listViewBtn')
+  const calendarBtn = document.getElementById('calendarViewBtn')
+  
+  if (view === 'list') {
+    listView.classList.remove('hidden')
+    calendarView.classList.add('hidden')
+    listBtn.style.color = 'var(--primary-color)'
+    listBtn.style.borderColor = 'var(--primary-color)'
+    calendarBtn.style.color = 'var(--text-light)'
+    calendarBtn.style.borderColor = 'transparent'
+  } else {
+    listView.classList.add('hidden')
+    calendarView.classList.remove('hidden')
+    calendarBtn.style.color = 'var(--primary-color)'
+    calendarBtn.style.borderColor = 'var(--primary-color)'
+    listBtn.style.color = 'var(--text-light)'
+    listBtn.style.borderColor = 'transparent'
+    displayServicesCalendar()
+  }
+}
+
+// Notifications management
+function toggleNotifications() {
+  const panel = document.getElementById('notificationsPanel')
+  panel.classList.toggle('hidden')
+  
+  if (!panel.classList.contains('hidden')) {
+    loadNotifications()
+  }
+}
+
+// Load and display notifications
+async function loadNotifications() {
+  try {
+    const response = await fetch('api/notifications/get.php', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
+    })
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      displayNotifications(result.data)
+      updateNotificationBadge(result.unread_count)
+    }
+  } catch (error) {
+    console.error('Error loading notifications:', error)
+  }
+}
+
+function displayNotifications(notifications) {
+  const notificationsContainer = document.getElementById('notificationsList')
+  if (!notificationsContainer) return
+  
+  if (notifications.length === 0) {
+    notificationsContainer.innerHTML = '<p class="text-center" style="color: var(--text-light);">No hay notificaciones</p>'
+    return
+  }
+  
+  notificationsContainer.innerHTML = notifications.map(notification => `
+    <div class="notification-item ${notification.leida ? '' : 'unread'}" onclick="markNotificationRead(${notification.id})">
+      <div class="flex justify-between items-start">
+        <div class="flex-1">
+          <h5 class="font-medium" style="color: var(--primary-color);">${notification.titulo}</h5>
+          <p class="text-sm" style="color: var(--text-color);">${notification.mensaje}</p>
+          <p class="text-xs" style="color: var(--text-light);">${formatDate(notification.fecha_creacion)}</p>
+        </div>
+        ${!notification.leida ? '<div class="notification-dot"></div>' : ''}
+      </div>
+    </div>
+  `).join('')
+}
+
+function updateNotificationBadge(count) {
+  const badge = document.getElementById('notificationBadge')
+  if (badge) {
+    if (count > 0) {
+      badge.textContent = count
+      badge.style.display = 'block'
+    } else {
+      badge.style.display = 'none'
+    }
+  }
+}
+
+async function markNotificationRead(notificationId) {
+  try {
+    await fetch('api/notifications/get.php', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: JSON.stringify({ notification_id: notificationId })
+    })
+    
+    loadNotifications() // Reload notifications
+  } catch (error) {
+    console.error('Error marking notification as read:', error)
+  }
 }
 
 function openModal(modalId) {

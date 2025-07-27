@@ -15,7 +15,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   initializeAnimations()
   setupGlobalErrorHandler()
   setupTokenRefresh()
+  handleUrlRouting()
+  setupBookingEventListeners()
 })
+
+// Setup booking event listeners
+function setupBookingEventListeners() {
+  // Price calculation listeners
+  const durationInput = document.getElementById('serviceDuration')
+  const dinersInput = document.getElementById('numberOfDiners')
+  
+  if (durationInput) {
+    durationInput.addEventListener('input', updateBookingPrice)
+  }
+  
+  if (dinersInput) {
+    dinersInput.addEventListener('input', updateBookingPrice)
+  }
+  
+  // Booking form submission
+  const bookingForm = document.getElementById('bookingForm')
+  if (bookingForm) {
+    bookingForm.addEventListener('submit', handleBookingSubmission)
+  }
+}
 
 // Setup automatic token refresh
 function setupTokenRefresh() {
@@ -355,6 +378,13 @@ function closeModal(modalId) {
   }
 }
 
+function closeBookingModal() {
+  closeModal('bookingModal')
+  // Reset selected chef and price
+  selectedChef = null
+  bookingPricePerHour = 0
+}
+
 // Smooth scroll to section
 function scrollToSection(sectionId) {
   const section = document.getElementById(sectionId)
@@ -679,8 +709,8 @@ function contactChef(chefId) {
     return
   }
 
-  localStorage.setItem("selectedChefId", chefId)
-  window.location.href = "booking.html"
+  // Abrir modal de reserva directamente
+  openBookingModal(chefId)
 }
 
 // Recipe functions
@@ -897,4 +927,236 @@ function validateEmail(email) {
 function validatePhone(phone) {
   const re = /^\d{4}-\d{4}$/
   return re.test(phone)
+}
+
+// URL Routing Handler
+function handleUrlRouting() {
+  const hash = window.location.hash
+  
+  if (hash.startsWith('#booking')) {
+    const urlParams = new URLSearchParams(hash.split('?')[1])
+    const chefId = urlParams.get('chef')
+    
+    if (chefId) {
+      if (!currentUser) {
+        showToast("Debes iniciar sesión para hacer una reserva", "warning")
+        openModal("loginModal")
+        return
+      }
+      openBookingModal(chefId)
+    }
+  }
+}
+
+// Listen for hash changes
+window.addEventListener('hashchange', handleUrlRouting)
+
+// Booking Modal Functions
+let selectedChef = null
+let bookingPricePerHour = 0
+
+async function openBookingModal(chefId) {
+  try {
+    console.log('Abriendo modal de reserva para chef ID:', chefId)
+    
+    // Validar que se proporcione un ID válido
+    if (!chefId || chefId === 'undefined' || chefId === 'null') {
+      console.error('Error: ID de chef inválido:', chefId)
+      showToast('Error: ID de chef no válido', 'error')
+      return
+    }
+    
+    showLoading()
+    
+    // Verificar autenticación
+    const token = localStorage.getItem('authToken')
+    if (!token) {
+      console.error('Error: Token de autenticación no encontrado')
+      showToast('Debes iniciar sesión para hacer una reserva', 'warning')
+      openModal('loginModal')
+      return
+    }
+    
+    // Fetch chef details
+    const apiUrl = `api/chefs/profile-complete.php?chef_id=${chefId}`
+    console.log('Consultando API:', apiUrl)
+    
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    console.log('Respuesta HTTP status:', response.status)
+    
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status} ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    console.log('Respuesta de la API:', data)
+    
+    if (data.success) {
+      selectedChef = data.data.profile
+      selectedChef.id = data.data.id
+      bookingPricePerHour = parseFloat(selectedChef.precio_por_hora || 0)
+      
+      console.log('Chef seleccionado:', selectedChef)
+      console.log('Precio por hora:', bookingPricePerHour)
+      
+      // Verificar que el chef tenga datos válidos
+      if (!selectedChef.id || !selectedChef.nombre) {
+        console.error('Error: Información del chef incompleta:', selectedChef)
+        showToast('Error: Información del chef incompleta', 'error')
+        return
+      }
+      
+      if (bookingPricePerHour <= 0) {
+        console.error('Error: Precio por hora no válido:', bookingPricePerHour)
+        showToast('Error: El chef no tiene precio por hora configurado', 'error')
+        return
+      }
+      
+      // Update modal content
+      const bookingChefNameElement = document.getElementById('bookingChefName')
+      if (bookingChefNameElement) {
+        bookingChefNameElement.textContent = selectedChef.nombre
+      }
+      
+      // Reset form
+      const bookingForm = document.getElementById('bookingForm')
+      if (bookingForm) {
+        bookingForm.reset()
+      }
+      
+      updateBookingPrice()
+      
+      // Add event listeners for price updates
+      const durationElement = document.getElementById('duracionServicio')
+      const dinersElement = document.getElementById('numeroComensales')
+      
+      if (durationElement) {
+        durationElement.removeEventListener('input', updateBookingPrice)
+        durationElement.addEventListener('input', updateBookingPrice)
+      }
+      if (dinersElement) {
+        dinersElement.removeEventListener('change', updateBookingPrice)
+        dinersElement.addEventListener('change', updateBookingPrice)
+      }
+      
+      console.log('Abriendo modal de reserva')
+      openModal('bookingModal')
+    } else {
+      console.error('Error en la respuesta de la API:', data.message)
+      showToast(data.message || 'Error al cargar información del chef', 'error')
+    }
+  } catch (error) {
+    console.error('Error opening booking modal:', error)
+    showToast(`Error al cargar información del chef: ${error.message}`, 'error')
+  } finally {
+    hideLoading()
+  }
+}
+
+function updateBookingPrice() {
+  const durationElement = document.getElementById('duracionServicio')
+  const dinersElement = document.getElementById('numeroComensales')
+  
+  const duration = durationElement ? parseFloat(durationElement.value) || 0 : 0
+  const diners = dinersElement ? parseInt(dinersElement.value) || 1 : 1
+  
+  const subtotal = bookingPricePerHour * duration
+  const total = subtotal
+  
+  // Update hourly rate display
+  const hourlyRateElement = document.getElementById('chefHourlyRate')
+  if (hourlyRateElement) {
+    hourlyRateElement.textContent = formatCurrency(bookingPricePerHour)
+  }
+  
+  // Update duration display
+  const serviceDurationElement = document.getElementById('serviceDuration')
+  if (serviceDurationElement) {
+    serviceDurationElement.textContent = `${duration} horas`
+  }
+  
+  // Update total price
+  const totalPriceElement = document.getElementById('totalPrice')
+  if (totalPriceElement) {
+    totalPriceElement.textContent = formatCurrency(total)
+  }
+}
+
+async function handleBookingSubmission(event) {
+  event.preventDefault()
+  
+  if (!selectedChef || !selectedChef.id) {
+    showToast('Error: No se ha seleccionado un chef válido', 'error')
+    return
+  }
+  
+  // Verificar que el chef tenga precio por hora
+  if (!selectedChef.precio_por_hora || selectedChef.precio_por_hora <= 0) {
+    showToast('Error: El chef seleccionado no tiene precio configurado', 'error')
+    return
+  }
+  
+  const formData = new FormData(event.target)
+  const bookingData = {
+    chef_id: selectedChef.id,
+    fecha_servicio: formData.get('fecha_servicio'),
+    hora_servicio: formData.get('hora_servicio'),
+    numero_comensales: parseInt(formData.get('numero_comensales')),
+    duracion_estimada: parseFloat(formData.get('duracion_servicio')),
+    ubicacion_servicio: formData.get('ubicacion_servicio'),
+    descripcion_evento: formData.get('descripcion_evento')
+  }
+  
+  // Validation
+  if (!bookingData.fecha_servicio || !bookingData.hora_servicio || !bookingData.ubicacion_servicio) {
+    showToast('Por favor completa todos los campos requeridos', 'warning')
+    return
+  }
+  
+  // Check if date is in the future
+  const serviceDateTime = new Date(`${bookingData.fecha_servicio}T${bookingData.hora_servicio}`)
+  if (serviceDateTime <= new Date()) {
+    showToast('La fecha y hora del servicio debe ser en el futuro', 'warning')
+    return
+  }
+  
+  try {
+    showLoading()
+    
+    const response = await fetch('api/services/create.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: JSON.stringify(bookingData)
+    })
+    
+    const data = await response.json()
+    
+    if (data.success) {
+      showToast('¡Reserva creada exitosamente!', 'success')
+      closeModal('bookingModal')
+      
+      // Clear URL hash
+      window.location.hash = ''
+      
+      // Optionally redirect to user profile or reservations
+      setTimeout(() => {
+        window.location.href = 'user-profile.html'
+      }, 2000)
+    } else {
+      showToast(data.message || 'Error al crear la reserva', 'error')
+    }
+  } catch (error) {
+    console.error('Error creating booking:', error)
+    showToast('Error al crear la reserva', 'error')
+  } finally {
+    hideLoading()
+  }
 }

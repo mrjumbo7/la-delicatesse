@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
 <body style="background-color: var(--gray-bg);">
     <!-- Header -->
@@ -174,13 +175,56 @@
                     <div class="p-8 card-hover" style="background-color: var(--light-bg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow);">
                         <div class="flex justify-between items-center mb-8">
                             <h2 class="text-3xl font-bold" style="color: var(--primary-color); font-family: var(--font-heading);">Mis Servicios</h2>
-                            <button onclick="openModal('serviceModal')" class="btn btn-primary">
-                                Nuevo Servicio
-                            </button>
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm font-medium" style="color: var(--text-color);">Notificaciones</span>
+                                    <div id="notificationBadge" class="notification-badge hidden">0</div>
+                                </div>
+                                <button onclick="toggleNotifications()" class="btn btn-outline btn-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6v-2H4v2zM4 15h8v-2H4v2zM4 11h10V9H4v2z"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                         
-                        <div id="servicesList" class="space-y-6">
-                            <!-- Se cargará dinámicamente -->
+                        <!-- Notifications Panel -->
+                        <div id="notificationsPanel" class="mb-6 p-4 rounded-lg hidden" style="background-color: var(--gray-bg); border: 1px solid var(--border-color);">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold" style="color: var(--primary-color);">Notificaciones</h3>
+                                <button onclick="markAllNotificationsRead()" class="btn btn-outline btn-sm">
+                                    Marcar todas como leídas
+                                </button>
+                            </div>
+                            <div id="notificationsList" class="space-y-2 max-h-60 overflow-y-auto">
+                                <!-- Se cargará dinámicamente -->
+                            </div>
+                        </div>
+                        
+                        <!-- Calendar and Services Tabs -->
+                        <div class="mb-6">
+                            <div class="flex space-x-4 border-b" style="border-color: var(--border-color);">
+                                <button onclick="showServicesView('list')" id="listViewBtn" class="px-4 py-2 font-medium border-b-2 border-transparent transition" style="color: var(--primary-color); border-color: var(--primary-color);">
+                                    Lista de Servicios
+                                </button>
+                                <button onclick="showServicesView('calendar')" id="calendarViewBtn" class="px-4 py-2 font-medium border-b-2 border-transparent transition" style="color: var(--text-light);">
+                                    Vista de Calendario
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Services List View -->
+                        <div id="servicesListView">
+                            <div id="servicesList" class="space-y-6">
+                                <!-- Se cargará dinámicamente -->
+                            </div>
+                        </div>
+                        
+                        <!-- Services Calendar View -->
+                        <div id="servicesCalendarView" class="hidden">
+                            <div id="servicesCalendar">
+                                <!-- Se cargará dinámicamente -->
+                            </div>
                         </div>
                     </div>
                 </div>

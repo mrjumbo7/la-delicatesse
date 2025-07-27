@@ -11,6 +11,10 @@ try {
     $database = new Database();
     $db = $database->getConnection();
     
+    if (!$db) {
+        throw new Exception('No se pudo conectar a la base de datos');
+    }
+    
     // Obtener el ID del chef y el idioma solicitado
     $chef_id = isset($_GET['chef_id']) ? intval($_GET['chef_id']) : 0;
     $language = isset($_GET['lang']) ? $_GET['lang'] : 'es';
@@ -30,13 +34,34 @@ try {
               WHERE u.id = ? AND u.tipo_usuario = 'chef'";
     
     $stmt = $db->prepare($profileQuery);
+    if (!$stmt) {
+        throw new Exception('Error al preparar consulta: ' . $db->error);
+    }
+    
     $stmt->bind_param('si', $language, $chef_id);
     $stmt->execute();
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
         $stmt->close();
-        throw new Exception('Perfil de chef no encontrado');
+        // Verificar si el usuario existe
+        $checkUserQuery = "SELECT id, nombre, tipo_usuario FROM usuarios WHERE id = ?";
+        $checkStmt = $db->prepare($checkUserQuery);
+        $checkStmt->bind_param('i', $chef_id);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+        
+        if ($checkResult->num_rows === 0) {
+            throw new Exception('Usuario no encontrado');
+        } else {
+            $user = $checkResult->fetch_assoc();
+            if ($user['tipo_usuario'] !== 'chef') {
+                throw new Exception('El usuario no es un chef');
+            } else {
+                throw new Exception('Chef existe pero no tiene perfil completo');
+            }
+        }
+        $checkStmt->close();
     }
     
     $chef_profile = $result->fetch_assoc();

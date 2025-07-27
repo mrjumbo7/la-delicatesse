@@ -88,7 +88,20 @@ async function loadChefData() {
         const apiUrl = `api/chefs/profile-complete.php?chef_id=${chefId}&lang=${currentLang}`;
         console.log('Consultando API:', apiUrl);
         
-        const response = await fetch(apiUrl);
+        // Prepare headers with authorization if available
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: headers
+        });
         
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
@@ -448,7 +461,7 @@ async function toggleFavorite(chefId) {
             return;
         }
         
-        const response = await fetch('/la-delicatesse/api/client/favorites.php', {
+        const response = await fetch('api/client/favorites.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -504,7 +517,7 @@ async function updateFavoriteButton() {
             return;
         }
         
-        const response = await fetch('/la-delicatesse/api/client/favorites.php', {
+        const response = await fetch('api/client/favorites.php', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -547,6 +560,8 @@ async function updateFavoriteButton() {
 function bookChef(chefId) {
     try {
         console.log('Iniciando proceso de reserva de chef');
+        console.log('Chef ID recibido:', chefId);
+        console.log('currentChef:', currentChef);
         
         if (!isAuthenticated) {
             console.log('Usuario no autenticado intentando reservar chef');
@@ -555,8 +570,14 @@ function bookChef(chefId) {
             return;
         }
         
-        if (!chefId) {
-            console.error('Error: ID del chef no proporcionado para reserva');
+        // Si no se proporciona chefId, intentar obtenerlo de currentChef
+        if (!chefId && currentChef && currentChef.id) {
+            chefId = currentChef.id;
+            console.log('Usando ID del chef desde currentChef:', chefId);
+        }
+        
+        if (!chefId || chefId === 'undefined' || chefId === 'null') {
+            console.error('Error: ID del chef no válido para reserva:', chefId);
             showToast('Error al intentar reservar: ID del chef no válido', 'error');
             return;
         }
@@ -569,11 +590,21 @@ function bookChef(chefId) {
             return;
         }
         
-        console.log('Redirigiendo a página de reserva para chef ID:', chefId);
-        window.location.href = `index.html#booking?chef=${chefId}`;
+        console.log('Verificando función openBookingModal...');
+        console.log('typeof openBookingModal:', typeof openBookingModal);
+        
+        // Open booking modal directly
+        if (typeof openBookingModal === 'function') {
+            console.log('Llamando a openBookingModal con ID:', chefId);
+            openBookingModal(chefId);
+        } else {
+            console.warn('Función openBookingModal no disponible, usando fallback');
+            // Fallback to URL redirect if function not available
+            window.location.href = `index.html#booking?chef=${chefId}`;
+        }
     } catch (error) {
         console.error('Error al procesar la reserva:', error);
-        showToast('Error al procesar la reserva', 'error');
+        showToast(`Error al procesar la reserva: ${error.message}`, 'error');
     }
 }
 

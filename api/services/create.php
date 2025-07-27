@@ -31,6 +31,7 @@ try {
     $hora_servicio = $input['hora_servicio'] ?? '';
     $ubicacion_servicio = $input['ubicacion_servicio'] ?? '';
     $numero_comensales = $input['numero_comensales'] ?? '';
+    $duracion_estimada = $input['duracion_estimada'] ?? 4;
     $descripcion_evento = $input['descripcion_evento'] ?? '';
     
     // Validaciones
@@ -49,20 +50,26 @@ try {
     $chefData = $result->fetch_assoc();
     $priceStmt->close();
     if (!$chefData) {
-        echo json_encode(['success' => false, 'message' => 'Chef no encontrado']);
+        echo json_encode(['success' => false, 'message' => 'Chef no encontrado o perfil incompleto']);
         exit;
     }
     
-    // Calcular precio total (asumiendo 4 horas de servicio)
-    $precio_total = $chefData['precio_por_hora'] * 4;
+    // Calcular precio total usando la duración estimada
+    $precio_total = $chefData['precio_por_hora'] * $duracion_estimada;
     
-    // Crear servicio
+    // Crear servicio (nota: duracion_estimada se usa solo para calcular precio, no se guarda en DB)
     $insertQuery = "INSERT INTO servicios (cliente_id, chef_id, fecha_servicio, hora_servicio, 
                                          ubicacion_servicio, numero_comensales, precio_total, 
                                          descripcion_evento, estado) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')";
     
     $insertStmt = $db->prepare($insertQuery);
+    if (!$insertStmt) {
+        error_log('Error preparando query: ' . $db->error);
+        echo json_encode(['success' => false, 'message' => 'Error preparando consulta: ' . $db->error]);
+        exit;
+    }
+    
     $insertStmt->bind_param('iisssiis', $user['id'], $chef_id, $fecha_servicio, $hora_servicio, 
                            $ubicacion_servicio, $numero_comensales, $precio_total, $descripcion_evento);
     
@@ -92,7 +99,8 @@ try {
     
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error interno del servidor']);
+    error_log('Error en create.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Error interno del servidor: ' . $e->getMessage()]);
 } finally {
     if (isset($db)) {
         $db->close();
